@@ -1,0 +1,16 @@
+{
+  "dependencies": {
+    "express": "^5.2.1"
+  },
+  "name": "looney-ducks-mvc",
+  "version": "1.0.0",
+  "description": "``` backend/ ├── app.js                    ← punto de entrada (antes server.js) ├── config/ │   └── db.js                  ← conexión MySQL (pool de promesas) ├── models/                    ← acceso a datos (consultas SQL) │   ├── usuarioModel.js │   ├── jugadorModel.js │   └── pagoModel.js ├── controllers/               ← lógica de negocio │   ├── authController.js │   ├── usuarioController.js │   ├── jugadorController.js │   └── pagoController.js ├── routes/                    ← definición de endpoints │   ├── authRoutes.js │   ├── usuarioRoutes.js │   ├── jugadorRoutes.js │   └── pagoRoutes.js ├── middlewares/ │   └── auth.js                ← requireAuth, requireAdmin ├── utils/ │   └── auth.js                ← hasheo de contraseñas ├── create-admin.js ├── schema.sql ├── package.json └── .env.example frontend/ ├── index.html ├── css/style.css └── js/app.js ```",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}
