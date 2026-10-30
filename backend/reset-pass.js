@@ -1,5 +1,5 @@
 const mysql = require('mysql2/promise');
-const { hashPassword } = require('./utils/auth'); // Usamos la misma función del proyecto
+const { hashPassword } = require('./backend/utils/auth'); // Asegúrate de que la ruta a utils/auth sea correcta según donde esté este archivo
 require('dotenv').config();
 
 async function cambiarClave() {
@@ -8,7 +8,11 @@ async function cambiarClave() {
             host: process.env.DB_HOST || 'localhost',
             user: process.env.DB_USER || 'root',
             password: process.env.DB_PASSWORD || '',
-            database: process.env.DB_NAME || 'looney_ducks_db'
+            database: process.env.DB_NAME || 'looney_ducks_db',
+            port: process.env.DB_PORT || 3306,
+            ssl: {
+                rejectUnauthorized: false
+            }
         });
 
         // Generar la clave con el formato exacto que reconoce auth.js
