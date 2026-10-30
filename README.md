@@ -104,3 +104,4 @@ UPDATE jugadores SET estado = 0 WHERE id = 5;
 UPDATE pagos SET estado = 0 WHERE id = 12;
 UPDATE usuarios SET estado = 0 WHERE id = 2;
 ```
+"# looney-ducks-mvc" 
