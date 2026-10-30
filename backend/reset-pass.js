@@ -1,21 +1,25 @@
 const mysql = require('mysql2/promise');
-const { hashPassword } = require('./backend/utils/auth'); // Asegúrate de que la ruta a utils/auth sea correcta según donde esté este archivo
+const { hashPassword } = require('./utils/auth');
 require('dotenv').config();
 
 async function cambiarClave() {
     try {
-        const connection = await mysql.createConnection({
+        // Configuramos la conexión detectando si hay puerto o si estamos en producción
+        const dbConfig = {
             host: process.env.DB_HOST || 'localhost',
             user: process.env.DB_USER || 'root',
             password: process.env.DB_PASSWORD || '',
             database: process.env.DB_NAME || 'looney_ducks_db',
-            port: process.env.DB_PORT || 3306,
-            ssl: {
-                rejectUnauthorized: false
-            }
-        });
+            port: process.env.DB_PORT || 3306
+        };
 
-        // Generar la clave con el formato exacto que reconoce auth.js
+        // Si estamos conectando a un servidor externo/remoto (como Aiven en Render), activamos el SSL
+        if (process.env.DB_HOST && process.env.DB_HOST !== 'localhost') {
+            dbConfig.ssl = { rejectUnauthorized: false };
+        }
+
+        const connection = await mysql.createConnection(dbConfig);
+
         const claveEncriptada = hashPassword('12345');
 
         const [result] = await connection.execute(
@@ -24,11 +28,11 @@ async function cambiarClave() {
         );
 
         if (result.affectedRows > 0) {
-            console.log('✅ ¡Contraseña restablecida con el método correcto!');
+            console.log('✅ ¡Contraseña restablecida con éxito para la nube!');
             console.log('👉 Usuario: admin');
             console.log('👉 Nueva Clave: 12345');
         } else {
-            console.log('❌ No se encontró el usuario admin.');
+            console.log('❌ No se encontró el usuario admin en la base de datos.');
         }
 
         await connection.end();
