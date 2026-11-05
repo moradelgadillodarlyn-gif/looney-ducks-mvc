@@ -1,5 +1,18 @@
 // js/modules/jugadores.js
 
+// Nadie nacido después de este año puede inscribirse (2026 en adelante queda bloqueado)
+const ANIO_MAX_NACIMIENTO = 2025;
+
+// Evita que un texto con < > " ' se interprete como HTML
+function escapar(texto) {
+    return String(texto ?? '').replace(/[&<>"']/g, c => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+}
+
+// Posiciones que pertenecen a futsal (el resto se considera balonmano)
+const POSICIONES_FUTSAL = ['guardameta', 'cierre', 'ala izquierdo', 'ala derecho', 'pívot'];
+
 export function calcularEdadYCategoria(fechaNacimientoStr) {
     if (!fechaNacimientoStr) return { edad: '-', categoria: 'Sin Fecha' };
     const anioNacimiento = parseInt(fechaNacimientoStr.toString().split(/[-/]/)[0]);
@@ -45,30 +58,30 @@ export function inicializarValidacionTutor() {
 
     if (tutorNombre) {
         tutorNombre.addEventListener('input', (e) => {
-            // Solo letras (con acentos/ñ) y espacios; nada de números ni símbolos
-            let valor = e.target.value.replace(/[^A-Za-zÁÉÍÓÚáéíóúÑñ\s]/g, '');
-            // Capitaliza cada palabra
-            valor = valor.replace(/\s+/g, ' ').replace(/\b\p{L}/gu, l => l.toUpperCase());
+            let cursorPosition = e.target.selectionStart;
+            let valor = e.target.value;
+            // Solo letras (con acentos/ñ) y espacios; sin números ni símbolos
+            valor = valor.replace(/[^A-Za-zÁÉÍÓÚáéíóúÑñ\s]/g, '');
+            // Capitaliza cada palabra correctamente (Primera mayúscula, resto minúscula)
+            valor = valor.toLowerCase().replace(/(^|\s)\S/g, l => l.toUpperCase());
             e.target.value = valor;
+            e.target.setSelectionRange(cursorPosition, cursorPosition);
         });
     }
 
     if (tutorTelefono) {
         tutorTelefono.addEventListener('input', (e) => {
-            // Solo dígitos, máximo 8
             let valor = e.target.value.replace(/\D/g, '').slice(0, 8);
             e.target.value = valor;
         });
     }
 }
 
-// Valida el teléfono del tutor: exactamente 8 dígitos y sin patrones "de relleno"
-// (mismo dígito repetido 4+ veces seguidas, o los 8 dígitos idénticos/alternando solo 2 valores)
 export function esTelefonoTutorValido(telefono) {
     if (!/^\d{8}$/.test(telefono)) return false;
-    if (/(\d)\1{3,}/.test(telefono)) return false; // 4+ repeticiones seguidas, ej. 7111100... 
+    if (/(\d)\1{3,}/.test(telefono)) return false; 
     const distintos = new Set(telefono.split('')).size;
-    if (distintos <= 2) return false; // ej. 11111111, 10101010, 71717171
+    if (distintos <= 2) return false; 
     return true;
 }
 
@@ -121,6 +134,20 @@ export async function guardarInscripcion(event) {
 
     if (!nombre || !disciplina || !posicion || !dia || !mes || !anio || !genero) {
         alert('Por favor completa todos los campos obligatorios.');
+        return;
+    }
+
+    if (parseInt(anio) > ANIO_MAX_NACIMIENTO) {
+        alert(`No se pueden inscribir atletas nacidos en ${ANIO_MAX_NACIMIENTO + 1} o después.`);
+        return;
+    }
+
+    // Verifica que la fecha exista realmente (ej. 31 de febrero no es válida)
+    const fechaComprobada = new Date(Number(anio), Number(mes) - 1, Number(dia));
+    if (fechaComprobada.getFullYear() !== Number(anio) ||
+        fechaComprobada.getMonth() !== Number(mes) - 1 ||
+        fechaComprobada.getDate() !== Number(dia)) {
+        alert('La fecha de nacimiento no es válida. Revisa el día y el mes.');
         return;
     }
 
@@ -201,28 +228,27 @@ export async function cargarJugadores() {
         tbodyBalonmano.innerHTML = '';
         tbodyFutsal.innerHTML = '';
 
-        const posicionesFutsal = ['guardameta', 'cierre', 'ala izquierdo', 'ala derecho', 'pívot'];
-
         lista.forEach(j => {
-            const nombreAtleta = j.nombre || j.nombre_completo || 'Sin Nombre';
+            const nombreAtleta = escapar(j.nombre || j.nombre_completo || 'Sin Nombre');
             const { edad, categoria } = calcularEdadYCategoria(j.fecha_nacimiento || j.fechaNacimiento);
-            
-            // Evaluación precisa de la disciplina
-            const disciplinaAtleta = (j.disciplina || '').toLowerCase();
-            const posicionAtleta = (j.posicion || '').toLowerCase();
-            const esFutsal = disciplinaAtleta === 'futsal' || posicionesFutsal.includes(posicionAtleta);
+
+            // Misma regla que usa el PDF del plantel
+            const posicionAtleta = String(j.posicion || '').toLowerCase().trim();
+            const esFutsal = String(j.disciplina || '').toLowerCase() === 'futsal'
+                || POSICIONES_FUTSAL.includes(posicionAtleta)
+                || posicionAtleta.includes('futsal');
 
             const fila = `<tr>
-                <td style="text-align:left;"><b>${nombreAtleta}</b><br><small style="color:#94a3b8;">${j.posicion || ''}</small></td>
-                <td>${j.rama || '-'}</td>
+                <td style="text-align:left;"><b>${nombreAtleta}</b><br><small style="color:#94a3b8;">${escapar(j.posicion)}</small></td>
+                <td>${escapar(j.rama || '-')}</td>
                 <td><b style="color:#ff6b00;">${categoria}</b><br><small>(${edad} años)</small></td>
                 <td style="text-align:center;">
-                    <span onclick="window.alternarDestacado(${j.id})" style="cursor:pointer; font-size: 16px;">
+                    <span onclick="window.alternarDestacado(${Number(j.id)})" style="cursor:pointer; font-size: 16px;">
                         ${j.destacado ? '⭐' : '☆'}
                     </span>
                 </td>
                 <td>
-                    <button onclick="window.eliminarJugador(${j.id})" style="background:#ef4444; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer;">
+                    <button onclick="window.eliminarJugador(${Number(j.id)})" style="background:#ef4444; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer;">
                         ELIMINAR
                     </button>
                 </td>
@@ -290,8 +316,7 @@ export function poblarFechas() {
 
     if (anioSelect && anioSelect.options.length <= 1) {
         anioSelect.innerHTML = '<option value="">Año de nacimiento</option>';
-        const anioActual = new Date().getFullYear();
-        for (let i = anioActual; i >= 1950; i--) {
+        for (let i = ANIO_MAX_NACIMIENTO; i >= 1950; i--) {
             const opt = document.createElement('option');
             opt.value = i;
             opt.textContent = i;
@@ -305,8 +330,14 @@ export function formatearNombreInput(input) {
     input.addEventListener('input', (e) => {
         let cursorPosition = e.target.selectionStart;
         let valor = e.target.value;
-        let valorFormateado = valor.replace(/\b\w/g, l => l.toUpperCase());
-        e.target.value = valorFormateado;
+        
+        // 1. Bloquear y eliminar cualquier número o símbolo extraño en tiempo real
+        valor = valor.replace(/[^A-Za-zÁÉÍÓÚáéíóúÑñ\s]/g, '');
+        
+        // 2. Formatear cada palabra: Primera letra en Mayúscula y el resto en minúscula
+        valor = valor.toLowerCase().replace(/(^|\s)\S/g, l => l.toUpperCase());
+
+        e.target.value = valor;
         e.target.setSelectionRange(cursorPosition, cursorPosition);
     });
 }

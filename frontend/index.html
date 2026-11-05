@@ -5,8 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Club Deportivo Looney Ducks</title>
     <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
 </head>
 <body>
+
     <div id="vanta-bg" style="width: 100%; height: 100vh; position: fixed; top: 0; left: 0; z-index: -1;"></div>
     
     <nav>
@@ -25,7 +27,7 @@
     </nav>
 
     <main>
-        <!-- SECCIÓN 1: INICIO (Activa por defecto) -->
+             <!-- SECCIÓN 1: INICIO (Activa por defecto) -->
         <div id="sec-inicio" class="seccion-page active">
             <div class="hero hero-split">
                 <div class="hero-text">
@@ -38,46 +40,89 @@
                     </div>
                 </div>
                 <div class="hero-media">
-                    <img src="https://cdn-icons-png.flaticon.com/512/5323/5323982.png" alt="Logo Club Looney Ducks" class="hero-img-fit">
+                    <div class="circulo-logo-container">
+                        <img src="img/logo-completo.jpeg" alt="Logotipo Oficial Club Deportivo Looney Ducks" class="logo-portada-animada">
+                    </div>
                 </div>
             </div>
 
             <!-- Métricas Rápidas -->
             <div class="stats-bar">
                 <div class="stat-item">
-                    <h3>+250</h3>
+                    <h3 id="stat-atletas">+250</h3>
                     <p>Atletas Activos</p>
                 </div>
                 <div class="stat-item">
-                    <h3>15+</h3>
+                    <h3 id="stat-titulos">15+</h3>
                     <p>Títulos Ganados</p>
                 </div>
                 <div class="stat-item">
-                    <h3>2</h3>
+                    <h3 id="stat-disciplinas">2</h3>
                     <p>Disciplinas</p>
                 </div>
                 <div class="stat-item">
-                    <h3>8</h3>
+                    <h3 id="stat-anios">8</h3>
                     <p>Años de Historia</p>
                 </div>
+            </div>
+            <div class="only-admin edit-bar" style="display: none;">
+                <button type="button" class="btn-editar" onclick="abrirEditorStats()">✏️ Editar métricas</button>
             </div>
 
             <!-- Match Center -->
             <div class="next-match-card">
                 <div class="match-header">
                     <span>🏆 PRÓXIMO ENCUENTRO OFICIAL</span>
-                    <span class="match-badge">Próximamente</span>
+                    <span class="match-badge" id="match-estado">Próximamente</span>
                 </div>
                 <div class="match-teams">
-                    <div class="team">
-                        <span class="team-name">Looney Ducks</span>
-                    </div>
+                    <div class="team"><span class="team-name" id="match-local">Looney Ducks</span></div>
                     <div class="vs">VS</div>
-                    <div class="team">
-                        <span class="team-name">Rival Local</span>
-                    </div>
+                    <div class="team"><span class="team-name" id="match-rival">Rival Local</span></div>
                 </div>
-                <p class="match-info">📍 Coliseo Municipal de Sacaba | 📅 Sábado 16:00 HB</p>
+                <p class="match-info" id="match-info">📍 Coliseo Municipal de Sacaba | 📅 Sábado 16:00 HB</p>
+            </div>
+            <div class="only-admin edit-bar" style="display: none;">
+                <button type="button" class="btn-editar" onclick="abrirEditorEncuentro()">✏️ Editar próximo encuentro</button>
+            </div>
+
+            <!-- Ventanas de edición (solo admin) -->
+            <div id="modal-stats" class="modal-edicion" style="display: none;">
+                <form id="form-stats" class="modal-contenido">
+                    <h3>Editar métricas</h3>
+                    <label>Atletas activos</label>
+                    <input type="text" id="ed-atletas" class="input-field" maxlength="20" required>
+                    <label>Títulos ganados</label>
+                    <input type="text" id="ed-titulos" class="input-field" maxlength="20" required>
+                    <label>Disciplinas</label>
+                    <input type="text" id="ed-disciplinas" class="input-field" maxlength="20" required>
+                    <label>Años de historia</label>
+                    <input type="text" id="ed-anios" class="input-field" maxlength="20" required>
+                    <div class="modal-botones">
+                        <button type="submit" class="btn-primary">Guardar</button>
+                        <button type="button" class="btn-cancelar" onclick="cerrarModal('modal-stats')">Cancelar</button>
+                    </div>
+                </form>
+            </div>
+
+            <div id="modal-encuentro" class="modal-edicion" style="display: none;">
+                <form id="form-encuentro" class="modal-contenido">
+                    <h3>Editar próximo encuentro</h3>
+                    <label>Equipo local</label>
+                    <input type="text" id="ed-local" class="input-field" maxlength="60" required>
+                    <label>Equipo rival</label>
+                    <input type="text" id="ed-rival" class="input-field" maxlength="60" required>
+                    <label>Lugar</label>
+                    <input type="text" id="ed-lugar" class="input-field" maxlength="120" required>
+                    <label>Fecha y hora</label>
+                    <input type="text" id="ed-fecha" class="input-field" maxlength="80" placeholder="Ej. Sábado 16:00 HB" required>
+                    <label>Etiqueta (estado)</label>
+                    <input type="text" id="ed-estado" class="input-field" maxlength="30" placeholder="Ej. Próximamente" required>
+                    <div class="modal-botones">
+                        <button type="submit" class="btn-primary">Guardar</button>
+                        <button type="button" class="btn-cancelar" onclick="cerrarModal('modal-encuentro')">Cancelar</button>
+                    </div>
+                </form>
             </div>
 
             <h2 class="section-title">Información Básica</h2>
@@ -92,70 +137,79 @@
                 </div>
             </div>
         </div>
+      <!-- SECCIÓN 2 ACTIVIDADES -->
+        <div id="sec-actividades" class="seccion-page">
+            <h2 class="section-title">Actividades y Trayectoria</h2>
 
- <!-- SECCIÓN 2 ACTIVIDADES -->
-<div id="sec-actividades" class="seccion-page">
-    <h2 class="section-title">Actividades y Trayectoria</h2>
+            <!-- Formulario para publicar (Solo Admin) -->
+            <div id="contenedor-form-actividad" class="form-card only-admin" style="display: none;">
+                <h3>➕ Publicar Nueva Actividad (Solo Admin)</h3>
+                
+                <form id="formActividad" enctype="multipart/form-data">
+                    <div class="form-row">
+                        <!-- Año / Gestión (Actualizado con límite desde 2018) -->
+                        <input 
+                            type="number" 
+                            id="anioInput" 
+                            name="anio"
+                            placeholder="Ej. 2026" 
+                            min="2018" 
+                            max="2099" 
+                            oninput="if(this.value.length > 4) this.value = this.value.slice(0, 4); if(this.value < 2018 && this.value !== '') this.value = 2018;" 
+                            required 
+                            class="input-field"
+                        >
 
-    <!-- Formulario para publicar (Solo Admin) -->
-    <div id="contenedor-form-actividad" class="form-card only-admin" style="display: none;">
-        <h3>➕ Publicar Nueva Actividad (Solo Admin)</h3>
-        
-        <form id="formActividad" enctype="multipart/form-data">
-            <div class="form-row">
-                <!-- Año / Gestión -->
-                <input 
-                    type="number" 
-                    id="anioInput" 
-                    name="gestion"
-                    placeholder="Año (ej. 2026)" 
-                    min="1990" 
-                    max="2099" 
-                    oninput="if(this.value.length > 4) this.value = this.value.slice(0, 4); if(this.value < 0) this.value = '';" 
-                    required 
-                    class="input-field"
-                >
+                        <!-- Título (Autocapitaliza: Primera Mayúscula, resto Minúsculas por palabra) -->
+                        <input 
+                            type="text" 
+                            id="tituloInput" 
+                            name="titulo"
+                            placeholder="Título de la Actividad" 
+                            oninput="this.value = this.value.replace(/[0-9]/g, '').toLowerCase().replace(/(^\w|\s\w)/g, m => m.toUpperCase());" 
+                            required 
+                            class="input-field"
+                        >
+                    </div>
 
-                <!-- Título (Autocapitaliza: Primera Mayúscula, resto Minúsculas por palabra) -->
-                <input 
-                    type="text" 
-                    id="tituloInput" 
-                    name="titulo"
-                    placeholder="Título de la Actividad" 
-                    oninput="this.value = this.value.replace(/[0-9]/g, '').toLowerCase().replace(/(^\w|\s\w)/g, m => m.toUpperCase());" 
-                    required 
-                    class="input-field"
-                >
+                    <textarea 
+                        id="descripcionInput" 
+                        name="descripcion"
+                        placeholder="Descripción de la actividad..." 
+                        rows="3" 
+                        required 
+                        class="input-field"
+                    ></textarea>
+                    
+                    <div class="file-upload-wrapper">
+                        <label for="imagenInput">Imágenes (Máximo 12):</label>
+                        <input type="file" id="imagenInput" name="imagenes" accept="image/*" multiple>
+                    </div>
+
+                    <button type="submit" class="btn-primary">Guardar Actividad</button>
+                </form>
             </div>
 
-            <textarea 
-                id="descripcionInput" 
-                name="descripcion"
-                placeholder="Descripción de la actividad..." 
-                rows="3" 
-                required 
-                class="input-field"
-            ></textarea>
-            
-             <div class="file-upload-wrapper">
-                <label for="imagenInput">Imágenes (Máximo 12):</label>
-                <!-- NOTA: Debe ser name="imagenes" en plural para coincidir con upload.array('imagenes', 12) -->
-                  <input type="file" id="imagenInput" name="imagenes" accept="image/*" multiple>
-          </div>
-
-            <button type="submit" class="btn-primary">Guardar Actividad</button>
-        </form>
-    </div>
-
-    <!-- Contenedor dinámico de tarjetas estilo Instagram -->
-    <div id="contenedor-actividades" class="cards-grid"></div>
-</div>
+            <!-- Contenedor dinámico de tarjetas estilo Instagram -->
+            <div id="contenedor-actividades" class="cards-grid"></div>
+        </div>
         <!-- SECCIÓN 3: GALERÍA -->
         <div id="sec-galeria" class="seccion-page">
             <h2 class="section-title">Galería de Eventos</h2>
-            <div class="galeria-grid">
-                <div class="galeria-item"><img src="https://images.unsplash.com/photo-1544698310-74ea9d1c8258?q=80&w=500" alt="Entrenamiento"><p>Entrenamientos Oficiales de Handball</p></div>
-                <div class="galeria-item"><img src="https://images.unsplash.com/photo-1519766304817-4f37bda74a27?q=80&w=500" alt="Campeonato"><p>Participación en Torneos Nacionales</p></div>
+
+            <!-- Filtro por año (se llena solo) -->
+            <div id="galeria-filtros" class="galeria-filtros"></div>
+
+            <!-- Fotos (se llenan solas desde Actividades) -->
+            <div id="galeria-contenedor" class="galeria-grid"></div>
+
+            <!-- Visor de foto ampliada -->
+            <div id="galeria-visor" class="galeria-visor" style="display: none;">
+                <button type="button" id="visor-cerrar" class="visor-cerrar" aria-label="Cerrar">✕</button>
+                <button type="button" id="visor-izq" class="visor-flecha izq" aria-label="Foto anterior">‹</button>
+                <img id="visor-img" alt="">
+                <button type="button" id="visor-der" class="visor-flecha der" aria-label="Foto siguiente">›</button>
+                <span id="visor-pie" class="visor-pie"></span>
             </div>
         </div>
 
@@ -262,7 +316,7 @@
             </div>
         </div>
 
-        <!-- SECCIÓN 6: PANEL DE ADMINISTRACIÓN -->
+  <!-- SECCIÓN 6: PANEL DE ADMINISTRACIÓN -->
         <div id="sec-panel" class="seccion-page">
             <!-- NAVEGACIÓN PRINCIPAL DEL PANEL -->
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; background: rgba(0,0,0,0.3); padding: 12px; border-radius: 8px; flex-wrap: wrap; gap: 10px;">
@@ -289,12 +343,13 @@
                     </div>
 
                     <div style="display: flex; gap: 10px;">
-                        <button type="button" onclick="exportarPlantelExcel('balonmano')" style="background-color: #16a34a; color: white; padding: 8px 14px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 0.85rem;">
-                            📊 Exportar Balonmano (Excel)
-                        </button>
-                        <button type="button" onclick="exportarPlantelExcel('futsal')" style="background-color: #0284c7; color: white; padding: 8px 14px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 0.85rem;">
-                            📊 Exportar Futsal (Excel)
-                        </button>
+                      <!-- Actualizado a PDF -->
+                       <a href="/api/jugadores/exportar-pdf?disciplina=balonmano" style="background-color: #dc2626; color: white; padding: 8px 14px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 0.85rem; text-decoration: none; display: inline-block;">
+    📄 Exportar Balonmano (PDF)
+                       </a>
+                       <a href="/api/jugadores/exportar-pdf?disciplina=futsal" style="background-color: #dc2626; color: white; padding: 8px 14px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 0.85rem; text-decoration: none; display: inline-block;">
+                          📄 Exportar Futsal (PDF)
+                       </a>
                     </div>
                 </div>
 
@@ -334,108 +389,144 @@
                     </div>
                 </div>
             </div>
-<!-- SUB-MÓDULO 2: LIBRO DE CAJA Y MENSUALIDADES -->
-<div id="submod-caja" style="display: none;">
-    <div class="card" style="width: 100%;">
-        <h2 style="color: #10b981; border-bottom: 2px solid #10b981; padding-bottom: 10px;">📋 Libro de Caja: Matriz Anual de Mensualidades</h2>
 
-        <div style="margin: 20px 0; display: flex; gap: 15px; align-items: center; justify-content: space-between; flex-wrap: wrap;">
-            <div style="display: flex; gap: 10px; align-items: center;">
-                <label>Ver Gestión Histórica:</label>
-                <select id="filtro-gestion-anio" onchange="cargarMatrizMeses()">
-                    <option value="2026">2026 (Gestión Actual)</option>
-                    <option value="2025">2025 (Año Pasado)</option>
-                    <option value="2024">2024 (Historial Antiguo)</option>
-                </select>
-            </div>
+            <!-- SUB-MÓDULO 2: LIBRO DE CAJA Y MENSUALIDADES -->
+            <div id="submod-caja" style="display: none;">
+                <div class="card" style="width: 100%;">
+                    <h2 style="color: #10b981; border-bottom: 2px solid #10b981; padding-bottom: 10px;">📋 Libro de Caja: Control de Mensualidades</h2>
 
-            <div style="display: flex; gap: 10px;">
-                <button type="button" onclick="exportarMatrizExcel()" style="background-color: #16a34a; color: white; padding: 8px 14px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 0.85rem;">
-                    📊 Exportar Matriz (Excel)
-                </button>
-                <button type="button" onclick="exportarMatrizPDF()" style="background-color: #dc2626; color: white; padding: 8px 14px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 0.85rem;">
-                    📄 Exportar Matriz (PDF)
-                </button>
-            </div>
-        </div>
+                    <!-- NAVEGACIÓN DE PESTAÑAS PARA CAJA -->
+                    <div style="margin: 20px 0; display: flex; gap: 15px; align-items: center; justify-content: space-between; flex-wrap: wrap;">
+                        <div style="display: flex; gap: 10px;">
+                            <button id="btn-caja-balonmano" type="button" onclick="cambiarPestanaCaja('balonmano')" style="background: #ff6b00; color: white; padding: 10px 20px; font-weight: bold; border-radius: 5px; border: none; cursor: pointer;">
+                                🤾 Caja Balonmano
+                            </button>
+                            <button id="btn-caja-futsal" type="button" onclick="cambiarPestanaCaja('futsal')" style="background: #334155; color: white; padding: 10px 20px; font-weight: bold; border-radius: 5px; border: none; cursor: pointer;">
+                                ⚽ Caja Futsal
+                            </button>
+                        </div>
 
-        <form id="form-cobro-meses" class="cobro-card">
-            <div class="cobro-header">
-                <span class="cobro-icon">💰</span>
-                <div>
-                    <h3>Registrar Pago de Mensualidad</h3>
-                    <p>Selecciona el atleta, el período y el método de pago</p>
-                </div>
-            </div>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <label>Ver Gestión Histórica:</label>
+                            <select id="filtro-gestion-anio" onchange="cargarMatrizMeses()">
+                                <option value="2026">2026 (Gestión Actual)</option>
+                                <option value="2025">2025 (Año Pasado)</option>
+                                <option value="2024">2024 (Historial Antiguo)</option>
+                            </select>
+                        </div>
+                    </div>
 
-            <div class="cobro-grid">
-                <div class="cobro-field cobro-field-wide">
-                    <label for="pop-jugador">Atleta</label>
-                    <select id="pop-jugador" name="jugador_id" required>
-                        <option value="" disabled selected>Seleccionar atleta...</option>
-                    </select>
-                </div>
+                    <!-- FORMULARIO DE REGISTRO DE PAGO -->
+                    <form id="form-cobro-meses" class="cobro-card">
+                        <div class="cobro-header">
+                            <span class="cobro-icon">💰</span>
+                            <div>
+                                <h3>Registrar Pago de Mensualidad</h3>
+                                <p>Selecciona el atleta, el período y el método de pago</p>
+                            </div>
+                        </div>
 
-                <div class="cobro-field">
-                    <label for="pop-mes">Mes de inicio</label>
-                    <select id="pop-mes" name="mes" required>
-                        <option value="Enero">Enero</option><option value="Febrero">Febrero</option>
-                        <option value="Marzo">Marzo</option><option value="Abril">Abril</option>
-                        <option value="Mayo">Mayo</option><option value="Junio">Junio</option>
-                        <option value="Julio">Julio</option><option value="Agosto">Agosto</option>
-                        <option value="Septiembre">Septiembre</option><option value="Octubre">Octubre</option>
-                        <option value="Noviembre">Noviembre</option><option value="Diciembre">Diciembre</option>
-                    </select>
-                </div>
+                        <div class="cobro-grid">
+                            <div class="cobro-field cobro-field-wide">
+                                <label for="pop-jugador">Atleta</label>
+                                <select id="pop-jugador" name="jugador_id" required>
+                                    <option value="" disabled selected>Seleccionar atleta...</option>
+                                </select>
+                            </div>
 
-                <div class="cobro-field">
-                    <label for="pop-cantidad-meses">Cantidad de meses</label>
-                    <select id="pop-cantidad-meses" onchange="actualizarMontoInput()">
-                        <option value="1">1 Mes (80 Bs)</option>
-                        <option value="2">2 Meses (160 Bs)</option>
-                        <option value="3">3 Meses (240 Bs)</option>
-                        <option value="4">4 Meses (320 Bs)</option>
-                        <option value="5">5 Meses (400 Bs)</option>
-                        <option value="6">6 Meses (480 Bs)</option>
-                    </select>
-                </div>
+                            <div class="cobro-field">
+                                <label for="pop-mes">Mes de inicio</label>
+                                <select id="pop-mes" name="mes" required>
+                                    <option value="Enero">Enero</option><option value="Febrero">Febrero</option>
+                                    <option value="Marzo">Marzo</option><option value="Abril">Abril</option>
+                                    <option value="Mayo">Mayo</option><option value="Junio">Junio</option>
+                                    <option value="Julio">Julio</option><option value="Agosto">Agosto</option>
+                                    <option value="Septiembre">Septiembre</option><option value="Octubre">Octubre</option>
+                                    <option value="Noviembre">Noviembre</option><option value="Diciembre">Diciembre</option>
+                                </select>
+                            </div>
 
-                <div class="cobro-field">
-                    <label for="pop-monto">Monto total</label>
-                    <input type="number" id="pop-monto" name="monto" value="80" readonly class="cobro-monto">
-                </div>
+                            <div class="cobro-field">
+                                <label for="pop-cantidad-meses">Cantidad de meses</label>
+                                <select id="pop-cantidad-meses" onchange="actualizarMontoInput()">
+                                    <option value="1">1 Mes (80 Bs)</option>
+                                    <option value="2">2 Meses (160 Bs)</option>
+                                    <option value="3">3 Meses (240 Bs)</option>
+                                    <option value="4">4 Meses (320 Bs)</option>
+                                    <option value="5">5 Meses (400 Bs)</option>
+                                    <option value="6">6 Meses (480 Bs)</option>
+                                </select>
+                            </div>
 
-                <div class="cobro-field">
-                    <label for="pop-metodo">Método de pago</label>
-                    <select id="pop-metodo" name="metodo_pago" required>
-                        <option value="EFECTIVO">💵 Efectivo</option>
-                        <option value="QR">📱 QR / Transf.</option>
-                    </select>
-                </div>
+                            <div class="cobro-field">
+                                <label for="pop-monto">Monto total</label>
+                                <input type="number" id="pop-monto" name="monto" value="80" readonly class="cobro-monto">
+                            </div>
 
-                <div class="cobro-field cobro-field-btn">
-                    <button type="submit" class="cobro-btn-submit">✅ Registrar Pago</button>
-                </div>
-            </div>
-        </form>
+                            <div class="cobro-field">
+                                <label for="pop-metodo">Método de pago</label>
+                                <select id="pop-metodo" name="metodo_pago" required>
+                                    <option value="EFECTIVO">💵 Efectivo</option>
+                                    <option value="QR">📱 QR / Transf.</option>
+                                </select>
+                            </div>
 
-        <div style="overflow-x: auto;">
-            <table id="tabla-matriz-meses" style="min-width: 1100px; text-align: center;">
-                <thead>
-                    <tr>
-                        <th style="text-align: left;">Nombre del Atleta</th>
-                        <th>Ene</th><th>Feb</th><th>Mar</th><th>Abr</th><th>May</th><th>Jun</th>
-                        <th>Jul</th><th>Ago</th><th>Sep</th><th>Oct</th><th>Nov</th><th>Dic</th>
-                        <th>Acción</th>
-                    </tr>
-                </thead>
-                <tbody id="cuerpo-matriz-meses"></tbody>
-            </table>
-        </div>
-    </div>
-</div>
+                            <div class="cobro-field cobro-field-btn">
+                                <button type="submit" class="cobro-btn-submit">✅ Registrar Pago</button>
+                            </div>
+                        </div>
+                    </form>
 
-        <!-- SECCIÓN 7: CAMBIAR CONTRASEÑA -->
+                    <!-- SECCIÓN MATRIZ BALONMANO -->
+                    <div id="seccion-caja-balonmano">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin: 15px 0;">
+                            <h3 style="color: #ff6b00;">🤾 Matriz de Pagos - Balonmano</h3>
+                            <div style="display: flex; gap: 10px;">
+                                <button type="button" onclick="exportarMatrizPDF()" style="background-color: #dc2626; color: white; padding: 6px 12px; border: none; border-radius: 5px; cursor: pointer; font-size: 0.8rem;">📄 PDF</button>
+                            </div>
+                        </div>
+                        <div style="overflow-x: auto;">
+                            <table id="tabla-matriz-balonmano" style="min-width: 1100px; text-align: center;">
+                                <thead>
+                                    <tr>
+                                        <th style="text-align: left;">Nombre del Atleta</th>
+                                        <th>Ene</th><th>Feb</th><th>Mar</th><th>Abr</th><th>May</th><th>Jun</th>
+                                        <th>Jul</th><th>Ago</th><th>Sep</th><th>Oct</th><th>Nov</th><th>Dic</th>
+                                        <th>Acción</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="cuerpo-matriz-balonmano"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- SECCIÓN MATRIZ FUTSAL -->
+                    <div id="seccion-caja-futsal" style="display: none;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin: 15px 0;">
+                            <h3 style="color: #00d2ff;">⚽ Matriz de Pagos - Futsal</h3>
+                            <div style="display: flex; gap: 10px;">
+                                <button type="button" onclick="exportarMatrizPDF()" style="background-color: #dc2626; color: white; padding: 6px 12px; border: none; border-radius: 5px; cursor: pointer; font-size: 0.8rem;">📄 PDF</button>
+                            </div>
+                        </div>
+                        <div style="overflow-x: auto;">
+                            <table id="tabla-matriz-futsal" style="min-width: 1100px; text-align: center;">
+                                <thead>
+                                    <tr>
+                                        <th style="text-align: left;">Nombre del Atleta</th>
+                                        <th>Ene</th><th>Feb</th><th>Mar</th><th>Abr</th><th>May</th><th>Jun</th>
+                                        <th>Jul</th><th>Ago</th><th>Sep</th><th>Oct</th><th>Nov</th><th>Dic</th>
+                                        <th>Acción</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="cuerpo-matriz-futsal"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div> <!-- cierra card de caja -->
+            </div> <!-- cierra submod-caja -->
+        </div> <!-- ✅ NUEVO: cierra sec-panel -->
+
+        <!-- SECCIÓN 7: CAMBIAR CONTRASEÑA (ahora es independiente de sec-panel) -->
         <div id="sec-cambiar-clave" class="seccion-page">
             <h2 class="section-title" style="font-size: 1.5rem;">🔑 Cambiar mi Contraseña</h2>
             <div class="form-card" style="max-width: 400px; margin: 0 auto;">
@@ -458,7 +549,7 @@
                 <p id="mensaje-cambiar-clave" style="margin-top:10px;"></p>
             </div>
         </div>
-    </main>
+    </main> <!-- ✅ aquí ya no hay un </div> extra antes -->
 
     <!-- LIBRERÍAS EXTERNAS -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -470,17 +561,24 @@
     <!-- SCRIPT PRINCIPAL DE LA APLICACIÓN -->
     <script type="module" src="js/app.js"></script>
 
-    <!-- El bridge anterior se eliminó: app.js ya expone todo lo necesario en window,
-         y ese script importaba funciones ('guardarInscripcion', 'verificarEdad') que
-         no existían en app.js, lo que provocaba un SyntaxError y rompía ese script. -->
-
     <script>
         function alternarOjito() {
             const inputPass = document.getElementById('log-pass');
             if (inputPass) {
-                inputPass.type = inputPass.type === 'password' ? 'text' : 'password';
+                let printPassType = inputPass.type === 'password' ? 'text' : 'password';
+                inputPass.type = printPassType;
             }
         }
     </script>
+    <script>
+    window.addEventListener('load', () => {
+        const hayVisible = Array.from(document.querySelectorAll('.seccion-page'))
+            .some(s => getComputedStyle(s).display !== 'none');
+        if (!hayVisible) {
+            const inicio = document.getElementById('sec-inicio');
+            if (inicio) inicio.style.display = 'block';
+        }
+    });
+</script>
 </body>
 </html>

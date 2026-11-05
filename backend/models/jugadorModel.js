@@ -15,20 +15,39 @@ const JugadorModel = {
         return rows[0];
     },
 
-    async create({ nombre, posicion, fecha_nacimiento, rama, usuarios_id }) {
+    async create({ nombre, disciplina, posicion, fecha_nacimiento, rama, tutor_nombre, tutor_telefono, usuarios_id }) {
         const [result] = await pool.query(
-            `INSERT INTO jugadores (nombre, posicion, fecha_nacimiento, rama, usuarios_id, estado)
-             VALUES (?, ?, ?, ?, ?, 0)`,
-            [nombre, posicion || null, fecha_nacimiento, rama, usuarios_id || null]
+            `INSERT INTO jugadores
+                (nombre, disciplina, posicion, fecha_nacimiento, rama, tutor_nombre, tutor_telefono, usuarios_id, estado)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0)`,
+            [
+                nombre,
+                disciplina || null,
+                posicion || null,
+                fecha_nacimiento,
+                rama,
+                tutor_nombre || null,
+                tutor_telefono || null,
+                usuarios_id || null
+            ]
         );
         return result.insertId;
     },
 
-    async update(id, { nombre, posicion, fecha_nacimiento, rama }) {
+    async update(id, { nombre, disciplina, posicion, fecha_nacimiento, rama }) {
         await pool.query(
-            `UPDATE jugadores SET nombre=?, posicion=?, fecha_nacimiento=?, rama=?
+            `UPDATE jugadores
+             SET nombre=?, disciplina=COALESCE(?, disciplina), posicion=?, fecha_nacimiento=?, rama=?
              WHERE id = ? AND estado = 0`,
-            [nombre, posicion || null, fecha_nacimiento, rama, id]
+            [nombre, disciplina ?? null, posicion || null, fecha_nacimiento, rama, id]
+        );
+    },
+
+    // Marca o desmarca al atleta como destacado (⭐)
+    async toggleDestacado(id) {
+        await pool.query(
+            'UPDATE jugadores SET destacado = IF(destacado = 1, 0, 1) WHERE id = ? AND estado = 0',
+            [id]
         );
     },
 

@@ -8,7 +8,7 @@ exports.getActividades = async (req, res) => {
             FROM actividades a 
             LEFT JOIN likes l ON a.id = l.actividad_id 
             GROUP BY a.id 
-            ORDER BY a.fecha_creacion DESC
+            ORDER BY a.id DESC
         `;
         const [actividades] = await db.query(query);
         
@@ -35,8 +35,13 @@ exports.getActividades = async (req, res) => {
 // POST: Crear actividad con subida múltiple
 exports.createActividad = async (req, res) => {
     try {
-        const { gestion, titulo, descripcion } = req.body;
+        // CAMBIO AQUÍ: Extraemos 'anio' en lugar de 'gestion' para que coincida con la BD
+        const { anio, titulo, descripcion } = req.body;
         
+        if (!titulo) {
+            return res.status(400).json({ error: 'El título es obligatorio' });
+        }
+
         let archivos = [];
         if (req.files) {
             if (req.files.imagenes) archivos = archivos.concat(req.files.imagenes);
@@ -48,9 +53,10 @@ exports.createActividad = async (req, res) => {
         let rutasImagenes = archivos.map(file => `/uploads/${file.filename}`);
         const imagen_url = rutasImagenes.length > 0 ? JSON.stringify(rutasImagenes) : null;
 
+        // CAMBIO AQUÍ: La columna en MySQL es 'anio'
         await db.query(
-            'INSERT INTO actividades (gestion, titulo, descripcion, imagen_url) VALUES (?, ?, ?, ?)',
-            [gestion || 2026, titulo, descripcion, imagen_url]
+            'INSERT INTO actividades (anio, titulo, descripcion, imagen_url) VALUES (?, ?, ?, ?)',
+            [anio || 2026, titulo, descripcion, imagen_url]
         );
 
         res.status(201).json({ mensaje: 'Actividad creada con éxito' });
@@ -59,6 +65,7 @@ exports.createActividad = async (req, res) => {
         res.status(500).json({ error: 'Error del servidor: ' + error.message });
     }
 };
+
 // DELETE: Eliminar actividad por ID
 exports.deleteActividad = async (req, res) => {
     try {
@@ -85,7 +92,7 @@ exports.toggleLike = async (req, res) => {
 exports.getComentarios = async (req, res) => {
     try {
         const [comentarios] = await db.query(
-            'SELECT * FROM comentarios WHERE actividad_id = ? ORDER BY fecha_creacion ASC', 
+            'SELECT * FROM comentarios WHERE actividad_id = ? ORDER BY id ASC', 
             [req.params.id]
         );
         res.json(comentarios);

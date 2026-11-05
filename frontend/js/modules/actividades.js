@@ -1,9 +1,111 @@
 // js/modules/actividades.js
 import { esAdmin } from './admin.js';
 
+// Evita que un texto con < > " ' rompa el HTML de la tarjeta
+export function escapar(texto) {
+    return String(texto ?? '').replace(/[&<>"']/g, c => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+}
+
+// Si viene solo el nombre del archivo, le agrega /uploads/
+function normalizarRuta(ruta) {
+    const r = String(ruta).trim();
+    if (/^(https?:)?\/\//.test(r) || r.startsWith('data:')) return r;
+    if (r.startsWith('/')) return r;
+    return '/uploads/' + r;
+}
+
+// Devuelve siempre una lista de rutas válidas, sin importar cómo llegue el dato
+export function obtenerFotos(act) {
+    let lista = [];
+
+    if (Array.isArray(act.imagenes) && act.imagenes.length > 0) {
+        lista = act.imagenes;
+    } else {
+        const crudo = act.imagen_url || act.imagen;
+        if (crudo) {
+            if (Array.isArray(crudo)) {
+                lista = crudo;
+            } else {
+                try {
+                    const parsed = JSON.parse(crudo);
+                    lista = Array.isArray(parsed) ? parsed : [crudo];
+                } catch (_) {
+                    // No es JSON: es una ruta o nombre de archivo simple
+                    lista = [crudo];
+                }
+            }
+        }
+    }
+
+    return lista.filter(Boolean).map(normalizarRuta);
+}
+
+function crearGaleriaHTML(fotos, titulo) {
+    if (fotos.length === 0) {
+        return `
+            <div style="width: 100%; height: 300px; background: linear-gradient(135deg, #121212, #262626); display: flex; flex-direction: column; align-items: center; justify-content: center; color: #ff6b00;">
+                <span style="font-size: 50px;">🏀</span>
+                <span style="font-size: 14px; font-weight: bold; margin-top: 10px; color: #fff;">${escapar(titulo)}</span>
+            </div>`;
+    }
+
+    const imgs = fotos.map(src =>
+        `<img src="${escapar(src)}" alt="${escapar(titulo)}" loading="lazy">`
+    ).join('');
+
+    // Una sola foto: sin flechas, puntos ni contador
+    if (fotos.length === 1) {
+        return `<div class="carrusel"><div class="carrusel-pista">${imgs}</div></div>`;
+    }
+
+    const puntos = fotos.map((_, i) =>
+        `<span class="carrusel-punto ${i === 0 ? 'activo' : ''}"></span>`
+    ).join('');
+
+    return `
+        <div class="carrusel">
+            <div class="carrusel-pista">${imgs}</div>
+            <button type="button" class="carrusel-flecha izq oculta" aria-label="Foto anterior">‹</button>
+            <button type="button" class="carrusel-flecha der" aria-label="Foto siguiente">›</button>
+            <span class="carrusel-contador">1/${fotos.length}</span>
+            <div class="carrusel-puntos">${puntos}</div>
+        </div>`;
+}
+
+// Activa flechas, puntos y contador de una tarjeta
+function inicializarCarrusel(article) {
+    const pista = article.querySelector('.carrusel-pista');
+    if (!pista) return;
+
+    const total = pista.children.length;
+    if (total < 2) return;
+
+    const flechaIzq = article.querySelector('.carrusel-flecha.izq');
+    const flechaDer = article.querySelector('.carrusel-flecha.der');
+    const puntos = article.querySelectorAll('.carrusel-punto');
+    const contador = article.querySelector('.carrusel-contador');
+
+    const actualizar = () => {
+        if (!pista.clientWidth) return; // sección oculta: no hay medidas todavía
+        const i = Math.round(pista.scrollLeft / pista.clientWidth);
+        puntos.forEach((p, k) => p.classList.toggle('activo', k === i));
+        if (contador) contador.textContent = `${i + 1}/${total}`;
+        if (flechaIzq) flechaIzq.classList.toggle('oculta', i === 0);
+        if (flechaDer) flechaDer.classList.toggle('oculta', i === total - 1);
+    };
+
+    const mover = (dir) => pista.scrollBy({ left: dir * pista.clientWidth, behavior: 'smooth' });
+
+    pista.addEventListener('scroll', actualizar, { passive: true });
+    if (flechaIzq) flechaIzq.addEventListener('click', () => mover(-1));
+    if (flechaDer) flechaDer.addEventListener('click', () => mover(1));
+}
+
 export async function cargarActividades() {
-    const contenedor = document.getElementById('contenedor-actividades') 
-                     || document.getElementById('grid-actividades') 
+    const contenedor = document.getElementById('contenedor-actividades')
+                     || document.getElementById('grid-actividades')
                      || document.querySelector('#actividades .contenido')
                      || document.querySelector('#seccion-actividades');
 
@@ -45,29 +147,7 @@ export async function cargarActividades() {
             article.id = `post-${act.id}`;
             article.style.cssText = 'width: 100%; max-width: 470px; background: #000; border: 1px solid #262626; border-radius: 8px; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; box-shadow: 0 4px 12px rgba(0,0,0,0.5);';
 
-            // Carrusel horizontal para múltiples imágenes
-            const fotos = act.imagenes || (act.imagen_url ? [act.imagen_url] : []);
-            let galeriaHTML = '';
-
-            if (fotos.length > 0) {
-                const imagenesTags = fotos.map(src => 
-                    `<img src="${src}" alt="${act.titulo}" style="width: 100%; height: 100%; object-fit: contain; flex-shrink: 0; scroll-snap-align: start;">`
-                ).join('');
-
-                galeriaHTML = `
-                    <div style="width: 100%; height: 450px; background: #000; position: relative;">
-                        <div style="width: 100%; height: 100%; display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none;">
-                            ${imagenesTags}
-                        </div>
-                        ${fotos.length > 1 ? `<span style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.7); color: #fff; font-size: 11px; padding: 4px 8px; border-radius: 12px;">1/${fotos.length}</span>` : ''}
-                    </div>`;
-            } else {
-                galeriaHTML = `
-                    <div style="width: 100%; height: 300px; background: linear-gradient(135deg, #121212, #262626); display: flex; flex-direction: column; align-items: center; justify-content: center; color: #ff6b00;">
-                        <span style="font-size: 50px;">🏀</span>
-                        <span style="font-size: 14px; font-weight: bold; margin-top: 10px; color: #fff;">${act.titulo}</span>
-                    </div>`;
-            }
+            const galeriaHTML = crearGaleriaHTML(obtenerFotos(act), act.titulo);
 
             article.innerHTML = `
                 <!-- Header -->
@@ -83,7 +163,7 @@ export async function cargarActividades() {
                                 <span style="color: #f5f5f5; font-size: 13.5px; font-weight: 600;">looneyducks_oficial</span>
                                 <span style="color: #0095f6; font-size: 12px;">✔</span>
                             </div>
-                            <span style="color: #a8a8a8; font-size: 11px;">Sacaba, Bolivia • ${act.gestion || '2026'}</span>
+                            <span style="color: #a8a8a8; font-size: 11px;">Sacaba, Bolivia • ${escapar(act.gestion || act.anio || '2026')}</span>
                         </div>
                     </div>
                     <div style="display: flex; align-items: center; gap: 8px;">
@@ -92,7 +172,7 @@ export async function cargarActividades() {
                     </div>
                 </div>
 
-                <!-- Galería de fotos -->
+                <!-- Galería de fotos (carrusel) -->
                 ${galeriaHTML}
 
                 <!-- Botones de Acción -->
@@ -116,8 +196,8 @@ export async function cargarActividades() {
                 <!-- Descripción -->
                 <div style="padding: 6px 14px; color: #f5f5f5; font-size: 13.5px; line-height: 1.4;">
                     <span style="font-weight: 600; margin-right: 6px;">looneyducks_oficial</span>
-                    <b style="color: #ff6b00;">${act.titulo || ''}</b> 
-                    <span style="color: #dbdbdb;">${act.descripcion || ''}</span>
+                    <b style="color: #ff6b00;">${escapar(act.titulo)}</b>
+                    <span style="color: #dbdbdb;">${escapar(act.descripcion)}</span>
                 </div>
 
                 <!-- Comentarios -->
@@ -128,6 +208,8 @@ export async function cargarActividades() {
                     </button>
                 </div>
             `;
+
+            inicializarCarrusel(article);
 
             const btnLike = article.querySelector('.btn-like');
             const likesCountEl = article.querySelector('.likes-count');
@@ -145,44 +227,6 @@ export async function cargarActividades() {
     }
 }
 
-export function inicializarFormularioActividad() {
-    const formActividad = document.getElementById('formActividad');
-
-    if (formActividad) {
-        formActividad.addEventListener('submit', async (e) => {
-            e.preventDefault();
-
-            const formData = new FormData(formActividad);
-
-            // Validación opcional en frontend para un máximo de 12 fotos
-            const inputImagenes = formActividad.querySelector('input[type="file"]');
-            if (inputImagenes && inputImagenes.files.length > 12) {
-                alert('Solo puedes subir un máximo de 12 imágenes por publicación.');
-                return;
-            }
-
-            try {
-                const res = await fetch('/api/actividades', {
-                    method: 'POST',
-                    body: formData
-                });
-
-                const data = await res.json();
-
-                if (res.ok) {
-                    alert('¡Actividad publicada con éxito!');
-                    formActividad.reset();
-                    cargarActividades();
-                } else {
-                    alert('Error al publicar: ' + (data.error || data.mensaje || 'Error desconocido'));
-                }
-            } catch (error) {
-                console.error('Error al guardar la actividad:', error);
-                alert('Ocurrió un error al conectar con el servidor.');
-            }
-        });
-    }
-}
 export async function darMeGustaBD(id, countEl, btnLike) {
     try {
         const res = await fetch(`/api/actividades/${id}/like`, { method: 'POST' });

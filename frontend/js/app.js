@@ -27,10 +27,11 @@ import {
 import {
     cargarMatrizMeses,
     calcularMontoTotal,
-    exportarMatrizExcel,
-    exportarMatrizPDF,
-    exportarPlantelExcel
+    exportarMatrizPDF
 } from './modules/pagos.js';
+
+import { inicializarInicio } from './modules/inicio.js';
+import { cargarGaleria } from './modules/galeria.js';
 
 // Módulo Actividades Seguro (no rompe si falta algún export)
 import * as ActividadesModule from './modules/actividades.js';
@@ -63,12 +64,14 @@ export function verSeccion(id) {
         const el = document.getElementById(`sec-${secId}`) || document.getElementById(secId);
         if (el) {
             el.style.display = 'none';
+            el.classList.remove('active');
         }
     });
 
     const objetivo = document.getElementById(`sec-${id}`) || document.getElementById(id);
     if (objetivo) {
         objetivo.style.display = 'block';
+        objetivo.classList.add('active');
     } else {
         console.warn(`No se encontró el elemento HTML para la sección: "${id}"`);
     }
@@ -78,6 +81,8 @@ export function verSeccion(id) {
         if (typeof cargarMatrizMeses === 'function') cargarMatrizMeses();
     } else if (id === 'actividades') {
         if (typeof cargarActividades === 'function') cargarActividades();
+    } else if (id === 'galeria') {
+        cargarGaleria();
     } else if (id === 'registro') {
         if (typeof poblarFechas === 'function') poblarFechas();
     }
@@ -130,14 +135,23 @@ window.cambiarPestanaPlantel = cambiarPestanaPlantel;
 // 3. REGISTRO DE EVENTOS DEL DOM
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
+    // Siempre abrir en Inicio y solo verificar si hay sesión de admin
+    // (para mostrar los botones de editar), sin saltar al panel.
+    verSeccion('inicio');
     if (typeof revisarSesionActiva === 'function') {
-        revisarSesionActiva(() => verSeccion('panel'));
+        revisarSesionActiva();
     }
+
     if (typeof inicializarLogin === 'function') {
         inicializarLogin(() => verSeccion('panel'));
     }
     if (typeof inicializarCambioClave === 'function') {
         inicializarCambioClave();
+    }
+
+    // Estadísticas y próximo encuentro de la página de inicio
+    if (typeof inicializarInicio === 'function') {
+        inicializarInicio();
     }
     
     if (typeof cargarActividades === 'function') {
@@ -169,11 +183,11 @@ document.addEventListener('DOMContentLoaded', () => {
             formData.append('anio', document.getElementById('anioInput')?.value || '2026');
             formData.append('titulo', document.getElementById('tituloInput')?.value || '');
             formData.append('descripcion', document.getElementById('descripcionInput')?.value || '');
-
+             
             const fileInput = document.getElementById('imagenInput');
-            if (fileInput && fileInput.files[0]) {
-                formData.append('imagen', fileInput.files[0]);
-            }
+            const archivos = fileInput ? Array.from(fileInput.files) : [];
+            if (archivos.length > 12) return alert('Máximo 12 imágenes por publicación.');
+            archivos.forEach(f => formData.append('imagenes', f));
 
             try {
                 const res = await fetch('/api/actividades', { method: 'POST', body: formData });
@@ -199,31 +213,50 @@ document.addEventListener('DOMContentLoaded', () => {
             const mesInicio = document.getElementById('pop-mes')?.value;
             const cantidadMeses = parseInt(document.getElementById('pop-cantidad-meses')?.value || '1');
             const elAnio = document.getElementById('filtro-gestion-anio');
-            const anio = elAnio ? elAnio.value : new Date().getFullYear();
+            const anio = Number(elAnio ? elAnio.value : new Date().getFullYear());
             const metodo_pago = document.getElementById('pop-metodo')?.value || 'EFECTIVO';
 
             if (!jugador_id) return alert('Selecciona un atleta primero.');
 
             const listaMeses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
-            let indexInicio = listaMeses.indexOf(mesInicio);
+            const indexInicio = listaMeses.indexOf(mesInicio);
 
-            try {
-                for (let i = 0; i < cantidadMeses; i++) {
-                    let mesAProcesar = listaMeses[(indexInicio + i) % 12];
-                    await fetch('/api/pagos', {
+            let registrados = 0;
+            const fallidos = [];
+
+            for (let i = 0; i < cantidadMeses; i++) {
+                const posicion = indexInicio + i;
+                const mesAProcesar = listaMeses[posicion % 12];
+                const anioPago = anio + Math.floor(posicion / 12); // pasado diciembre, sigue el año siguiente
+
+                try {
+                    const res = await fetch('/api/pagos', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ jugador_id, anio, mes: mesAProcesar, monto: 80, metodo_pago })
+                        body: JSON.stringify({ jugador_id, anio: anioPago, mes: mesAProcesar, monto: 80, metodo_pago })
                     });
+
+                    if (res.ok) {
+                        registrados++;
+                    } else {
+                        const data = await res.json().catch(() => ({}));
+                        fallidos.push(`${mesAProcesar} ${anioPago}: ${data.error || 'no se pudo registrar'}`);
+                    }
+                } catch (err) {
+                    fallidos.push(`${mesAProcesar} ${anioPago}: error de conexión`);
                 }
-                alert(`✅ Se registró el pago de ${cantidadMeses} mes(es).`);
-                if (typeof cargarMatrizMeses === 'function') cargarMatrizMeses();
-            } catch (err) {
-                alert('Error de conexión al registrar los pagos.');
             }
+
+            if (fallidos.length === 0) {
+                alert(`✅ Se registró el pago de ${registrados} mes(es).`);
+            } else {
+                alert(`Se registraron ${registrados} de ${cantidadMeses} mes(es).\n\nNo se pudieron registrar:\n- ${fallidos.join('\n- ')}`);
+            }
+
+            if (typeof cargarMatrizMeses === 'function') cargarMatrizMeses();
         });
     }
-});
+}); // ✅ ESTE CIERRE FALTABA: termina la función de DOMContentLoaded
 
 // ==========================================
 // 4. EXPOSICIÓN AL ÁMBITO GLOBAL (WINDOW)
@@ -246,9 +279,7 @@ window.toggleClavePanel = alternarOjito;
 // Módulo Pagos / Caja
 window.cargarMatrizMeses = cargarMatrizMeses;
 window.calcularMontoTotal = calcularMontoTotal;
-window.exportarMatrizExcel = exportarMatrizExcel;
 window.exportarMatrizPDF = exportarMatrizPDF;
-window.exportarPlantelExcel = exportarPlantelExcel;
 
 // Módulo Actividades
 window.eliminarActividad = eliminarActividad;
@@ -256,3 +287,8 @@ window.darMeGusta = darMeGusta;
 window.agregarComentario = agregarComentario;
 window.alternarGuardado = alternarGuardado;
 window.compartirPost = compartirPost;
+
+// Garantiza que Inicio se vea al terminar de cargar todo
+window.addEventListener('load', () => {
+    setTimeout(() => verSeccion('inicio'), 500);
+});

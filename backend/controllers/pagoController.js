@@ -3,7 +3,8 @@ const PagoModel = require('../models/pagoModel');
 const PagoController = {
     async getAll(req, res) {
         try {
-            res.json(await PagoModel.getAll());
+            const pagos = await PagoModel.getAll();
+            res.json(pagos);
         } catch (err) {
             res.status(500).json({ error: err.message });
         }
@@ -11,7 +12,8 @@ const PagoController = {
 
     async getMatrizAnual(req, res) {
         try {
-            res.json(await PagoModel.getMatrizAnual(req.params.anio));
+            const matriz = await PagoModel.getMatrizAnual(req.params.anio);
+            res.json(matriz);
         } catch (err) {
             res.status(500).json({ error: err.message });
         }
@@ -38,11 +40,11 @@ const PagoController = {
         }
     },
 
-    // Eliminación lógica (estado = 1), no borra el registro de la BD
+    // Eliminación lógica (cambia el estado en la BD)
     async remove(req, res) {
         try {
             await PagoModel.softDelete(req.params.id);
-            res.json({ mensaje: 'Pago eliminado (lógicamente) con éxito' });
+            res.json({ mensaje: 'Pago actualizado/eliminado lógicamente con éxito' });
         } catch (err) {
             res.status(500).json({ error: err.message });
         }

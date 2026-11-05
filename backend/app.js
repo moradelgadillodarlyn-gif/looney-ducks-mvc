@@ -1,67 +1,62 @@
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '.env') });
 
+const crypto = require('crypto');
 const express = require('express');
 const session = require('express-session');
-const bcrypt = require('bcrypt'); // Importado para encriptar la contraseña
 
-const app = express(); // <--- Aquí se crea la aplicación de Express primero
+const app = express();
 const PORT = process.env.PORT || 3000;
 
-const Usuario = require('./models/usuarioModel'); // Importado para actualizar la base de datos
+// Render funciona detrás de un proxy: necesario para que las sesiones funcionen
+app.set('trust proxy', 1);
 
 const authRoutes = require('./routes/authRoutes');
 const usuarioRoutes = require('./routes/usuarioRoutes');
 const jugadorRoutes = require('./routes/jugadorRoutes');
 const pagoRoutes = require('./routes/pagoRoutes');
 const actividadRoutes = require('./routes/actividadRoutes');
+const inicioRoutes = require('./routes/inicioRoutes');
 
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // Archivos estáticos del frontend
 app.use(express.static(path.join(__dirname, '../frontend')));
 
-// Servir la carpeta de imágenes subidas para hacerlas accesibles desde la web
+// Imágenes subidas
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
+// Clave de las sesiones: usa SESSION_SECRET si existe. Si no, genera una aleatoria al arrancar
+// (las sesiones ya se pierden al reiniciar el servidor, así que no se pierde nada extra).
+const SESSION_SECRET = process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex');
+if (!process.env.SESSION_SECRET) {
+    console.warn('⚠️  SESSION_SECRET no está definida: se usa una clave aleatoria temporal.');
+}
+
 app.use(session({
-    secret: process.env.SESSION_SECRET || 'cambia_esto',
+    secret: SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
-    cookie: { maxAge: 1000 * 60 * 60 * 2, httpOnly: true } // 2 horas
+    cookie: {
+        maxAge: 1000 * 60 * 60 * 2, // 2 horas
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax'
+    }
 }));
 
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '../frontend/index.html'));
 });
 
-// ==========================================
-//    RUTAS (Controladores por módulo)
-// ==========================================
-app.use('/api', authRoutes);                 // /api/login, /api/logout, /api/sesion, /api/cambiar-clave
-app.use('/api/usuarios', usuarioRoutes);      // CRUD usuarios (directiva)
-app.use('/api/jugadores', jugadorRoutes);     // CRUD jugadores
-app.use('/api/pagos', pagoRoutes);            // CRUD pagos + matriz anual
-app.use('/api/actividades', actividadRoutes); // CRUD actividades (con imágenes)
-
-// ==========================================
-//    RUTA TEMPORAL PARA RESTABLECER CONTRASEÑA
-// ==========================================
-app.get('/reset-pass', async (req, res) => {
-    try {
-        const usuarioAdmin = await Usuario.getByUsuarioConClave('admin');
-        if (!usuarioAdmin) {
-            return res.status(404).send('❌ El usuario "admin" no existe en la base de datos.');
-        }
-
-        const nuevaClaveHash = await bcrypt.hash('12345', 10);
-        await Usuario.actualizarClave(usuarioAdmin.id, nuevaClaveHash);
-
-        res.send('✅ Contraseña del usuario "admin" restablecida con éxito a: 12345');
-    } catch (error) {
-        res.status(500).send('❌ Error al restablecer la contraseña: ' + error.message);
-    }
-});
+// Rutas por módulo
+app.use('/api', authRoutes);
+app.use('/api/usuarios', usuarioRoutes);
+app.use('/api/jugadores', jugadorRoutes);
+app.use('/api/pagos', pagoRoutes);
+app.use('/api/actividades', actividadRoutes);
+app.use('/api/inicio', inicioRoutes);
 
 app.listen(PORT, () => {
     console.log(`Sistema Administrativo (MVC) en: http://localhost:${PORT}`);
