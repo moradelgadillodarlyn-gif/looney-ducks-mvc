@@ -1,6 +1,7 @@
 // ==========================================
 // JS/MODULES/PAGOS.JS - GESTIÓN DE CAJA Y CUOTAS
 // ==========================================
+import { abrirEditor } from './editor.js';
 
 const MESES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 const COSTO_POR_MES = 80;
@@ -25,6 +26,9 @@ function escapar(texto) {
 
 let pestanaCajaActual = 'balonmano';
 let aniosPoblados = false;
+
+// Pagos de la gestión cargada (los usa la ventana de edición)
+let pagosCache = [];
 
 // Llena el selector de gestión: desde 2024 hasta el año que viene
 // (así un pago de noviembre a enero se puede ver)
@@ -78,7 +82,7 @@ window.cambiarPestanaCaja = function(disciplina) {
  * Si ya se tiene la lista, se pasa para no pedirla de nuevo al servidor.
  */
 export async function cargarAtletasEnSelect(listaAtletas) {
-    const selectAtleta = document.getElementById('pop-jugador') 
+    const selectAtleta = document.getElementById('pop-jugador')
                         || document.getElementById('atletaSelect')
                         || document.querySelector('select[name="jugador_id"]');
 
@@ -128,6 +132,7 @@ export async function cargarMatrizPorDisciplina(disciplina, idContenedor) {
 
         const todosLosJugadores = await resJugadores.json();
         const pagos = await resPagos.json();
+        pagosCache = pagos;
 
         await cargarAtletasEnSelect(todosLosJugadores);
 
@@ -151,11 +156,13 @@ export async function cargarMatrizPorDisciplina(disciplina, idContenedor) {
             MESES.forEach(mes => {
                 const pagoRealizado = pagos.find(p =>
                     (p.jugador_id === j.id || p.atleta_id === j.id) &&
-                    String(p.mes || '').toLowerCase() === mes.toLowerCase()
+                    String(p.mes || '').toLowerCase() === mes.toLowerCase() &&
+                    (p.anio === undefined || Number(p.anio) === Number(anio))
                 );
 
                 if (pagoRealizado) {
-                    htmlFila += `<td style="background: rgba(16, 185, 129, 0.2); color: #10b981; text-align:center; font-weight:bold; font-size:12px;">✅</td>`;
+                    // Clic en el ✅ para editar o anular ese pago
+                    htmlFila += `<td data-pago-id="${Number(pagoRealizado.id)}" title="Clic para editar o anular este pago" style="background: rgba(16, 185, 129, 0.2); color: #10b981; text-align:center; font-weight:bold; font-size:12px; cursor:pointer;">✅</td>`;
                 } else {
                     htmlFila += `<td style="background: rgba(239, 68, 68, 0.1); color: #ef4444; text-align:center; font-size:12px;">❌</td>`;
                 }
@@ -170,6 +177,9 @@ export async function cargarMatrizPorDisciplina(disciplina, idContenedor) {
 
             tr.innerHTML = htmlFila;
             tr.querySelector('.btn-cobrar').addEventListener('click', () => window.abrirModalCobro(j.id));
+            tr.querySelectorAll('[data-pago-id]').forEach(td => {
+                td.addEventListener('click', () => editarPago(Number(td.dataset.pagoId)));
+            });
             contenedor.appendChild(tr);
         });
 
@@ -179,6 +189,55 @@ export async function cargarMatrizPorDisciplina(disciplina, idContenedor) {
         console.error('Error al cargar la matriz:', err);
         contenedor.innerHTML = '<tr><td colspan="14" style="text-align:center; color:#ef4444; padding:20px;">Error de conexión.</td></tr>';
     }
+}
+
+/**
+ * Ventana para corregir un pago ya registrado (mes, año y monto) o anularlo
+ */
+export function editarPago(id) {
+    const pago = pagosCache.find(p => Number(p.id) === Number(id));
+    if (!pago) {
+        alert('No se encontró el pago. Recarga la matriz e inténtalo de nuevo.');
+        return;
+    }
+
+    const mesActual = MESES.find(m => m.toLowerCase() === String(pago.mes || '').toLowerCase()) || pago.mes;
+    const nombre = pago.jugador_nombre || 'atleta';
+
+    abrirEditor({
+        titulo: `✏️ Editar pago — ${nombre}`,
+        campos: [
+            { id: 'mes', etiqueta: 'Mes', tipo: 'select', valor: mesActual, requerido: true, opciones: MESES },
+            { id: 'anio', etiqueta: 'Año', tipo: 'number', valor: pago.anio, requerido: true, min: 2018, max: 2100, step: 1 },
+            { id: 'monto', etiqueta: 'Monto (Bs)', tipo: 'number', valor: pago.monto, requerido: true, min: 1, step: 'any' }
+        ],
+        onGuardar: async (v) => {
+            const res = await fetch(`/api/pagos/${Number(id)}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ mes: v.mes, anio: Number(v.anio), monto: Number(v.monto) })
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(data.error || 'No se pudo actualizar el pago.');
+
+            cargarMatrizMeses();
+        },
+        botonesExtra: [
+            {
+                texto: '🗑️ Anular este pago',
+                clase: 'btn-eliminar',
+                onClick: async () => {
+                    if (!confirm(`¿Anular el pago de ${mesActual} ${pago.anio} de ${nombre}?`)) return false;
+                    const res = await fetch(`/api/pagos/${Number(id)}`, { method: 'DELETE' });
+                    if (!res.ok) {
+                        const data = await res.json().catch(() => ({}));
+                        throw new Error(data.error || 'No se pudo anular el pago.');
+                    }
+                    cargarMatrizMeses();
+                }
+            }
+        ]
+    });
 }
 
 /**
@@ -203,7 +262,7 @@ export function calcularMontoTotal(pagos = []) {
 export function actualizarMontoInput() {
     const selectCantidad = document.getElementById('pop-cantidad-meses') || document.querySelector('select[name="cantidad_meses"]');
     const inputMonto = document.getElementById('pop-monto');
-    
+
     if (!selectCantidad || !inputMonto) return;
 
     const mesesSeleccionados = parseInt(selectCantidad.value) || 1;
@@ -235,6 +294,7 @@ window.abrirModalCobro = function(jugadorId) {
 window.actualizarMontoInput = actualizarMontoInput;
 window.exportarMatrizExcel = exportarMatrizExcel;
 window.exportarMatrizPDF = exportarMatrizPDF;
+window.editarPago = editarPago;
 
 export function exportarPlantelExcel(disciplina = 'balonmano') {
     const tabla = document.getElementById(`tabla-${disciplina}`) || document.querySelector('table');

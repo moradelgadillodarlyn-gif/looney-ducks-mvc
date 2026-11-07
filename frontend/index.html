@@ -7,7 +7,183 @@
     <link rel="stylesheet" href="css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
 </head>
-<body>
+<body class="acceso-bloqueado">
+    <!-- ==========================================
+         PANTALLA DE ACCESO (antes de entrar al sitio)
+         ========================================== -->
+    <div id="pantalla-acceso" class="acceso-pantalla">
+
+        <div class="acceso-marca">
+            <div class="acceso-emblema">
+                <div class="acceso-aros" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+                <div class="acceso-logo">
+                    <img src="img/logo-completo.jpeg" alt="Logotipo del Club Deportivo Looney Ducks">
+                </div>
+            </div>
+            <h1 class="acceso-titulo">Looney <span>Ducks</span></h1>
+            <p class="acceso-lema">Balonmano y Futsal en Sacaba desde 2018</p>
+        </div>
+
+        <div class="acceso-lado">
+            <div class="acceso-tarjeta">
+
+                <div id="acceso-tabs" class="acceso-tabs">
+                    <button type="button" id="tab-login" class="acceso-tab activo" onclick="mostrarPanelAcceso('login')">Iniciar sesión</button>
+                    <button type="button" id="tab-cuenta" class="acceso-tab" onclick="mostrarPanelAcceso('cuenta')">Crear cuenta</button>
+                </div>
+
+                <!-- PANEL: INICIAR SESIÓN -->
+                <div id="acceso-login" class="acceso-panel activo">
+                    <h2>Bienvenido</h2>
+                    <p class="acceso-sub">Ingresa con tu usuario o tu correo electrónico.</p>
+
+                    <form id="form-acceso" novalidate>
+                        <div class="cuenta-campo">
+                            <label for="acc-usuario">Usuario o correo electrónico</label>
+                            <input type="text" id="acc-usuario" class="input-field" maxlength="120" placeholder="Tu usuario o correo" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false">
+                        </div>
+
+                        <div class="cuenta-campo">
+                            <label for="acc-clave">Contraseña</label>
+                            <div class="cuenta-clave">
+                                <input type="password" id="acc-clave" class="input-field" maxlength="100" placeholder="Tu contraseña" autocomplete="current-password">
+                                <button type="button" class="btn-ojo" onclick="window.toggleClavePanel('acc-clave', this)" aria-label="Mostrar u ocultar contraseña">👁️</button>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn-acceso">Iniciar sesión</button>
+                    </form>
+
+                    <p id="acc-mensaje" class="cuenta-mensaje"></p>
+
+                    <p class="acceso-enlaces">
+                        <a href="javascript:void(0)" onclick="mostrarPanelAcceso('recuperar')">¿Olvidaste tu contraseña?</a>
+                    </p>
+                    <p class="acceso-pie">¿Aún no tienes cuenta? <a href="javascript:void(0)" onclick="mostrarPanelAcceso('cuenta')">Crea una nueva</a></p>
+                </div>
+
+                <!-- PANEL: CREAR CUENTA -->
+                <div id="acceso-cuenta" class="acceso-panel">
+                    <h2>Crea tu cuenta</h2>
+                    <p class="acceso-sub">Regístrate para entrar al sitio del club.</p>
+
+                    <div class="acceso-nota">🔒 Por seguridad te pedimos tu número de celular. Un mismo número puede usarse en un máximo de 2 cuentas.</div>
+
+                    <form id="form-cuenta" novalidate autocomplete="off">
+                        <div class="cuenta-campo">
+                            <label for="cta-rol">Tipo de cuenta</label>
+                            <select id="cta-rol" class="input-field">
+                                <option value="">Selecciona tu rol</option>
+                                <option value="atleta">Atleta</option>
+                                <option value="padre">Padre / Madre / Tutor</option>
+                            </select>
+                            <p class="acceso-ayuda">El rol de entrenador lo asigna el administrador.</p>
+                        </div>
+
+                        <div class="cuenta-campo">
+                            <label id="cta-etiqueta-nombre" for="cta-nombre">Nombre completo</label>
+                            <input type="text" id="cta-nombre" class="input-field" maxlength="100" placeholder="Ej. Juan Carlos Pérez Rojas">
+                        </div>
+
+                        <!-- Solo se muestra si el rol es atleta -->
+                        <div id="cta-bloque-apellidos" style="display: none;">
+                            <div class="cuenta-campo">
+                                <label for="cta-paterno">Apellido paterno</label>
+                                <input type="text" id="cta-paterno" class="input-field" maxlength="50" placeholder="Ej. Pérez">
+                            </div>
+                            <div class="cuenta-campo">
+                                <label for="cta-materno">Apellido materno</label>
+                                <input type="text" id="cta-materno" class="input-field" maxlength="50" placeholder="Ej. Rojas">
+                            </div>
+                        </div>
+
+                        <div class="cuenta-campo">
+                            <label for="cta-usuario">Nombre de usuario</label>
+                            <input type="text" id="cta-usuario" class="input-field" maxlength="30" placeholder="Empieza con una letra (4 a 30 caracteres)" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false">
+                            <p id="cta-usuario-ayuda" class="acceso-ayuda">Solo letras, números, punto (.) y guion bajo (_). Sin espacios ni tildes.</p>
+                        </div>
+
+                        <div class="cuenta-campo">
+                            <label for="cta-celular">Celular</label>
+                            <input type="tel" id="cta-celular" class="input-field" maxlength="8" inputmode="numeric" placeholder="8 dígitos">
+                        </div>
+
+                        <div class="cuenta-campo">
+                            <label for="cta-correo">Correo electrónico</label>
+                            <input type="email" id="cta-correo" class="input-field" maxlength="120" placeholder="correo@ejemplo.com" autocomplete="email" autocapitalize="none" spellcheck="false">
+                        </div>
+
+                        <div class="cuenta-campo">
+                            <label for="cta-clave">Contraseña</label>
+                            <div class="cuenta-clave">
+                                <input type="password" id="cta-clave" class="input-field" maxlength="100" placeholder="Mínimo 6 caracteres" autocomplete="new-password">
+                                <button type="button" class="btn-ojo" onclick="window.toggleClavePanel('cta-clave', this)" aria-label="Mostrar u ocultar contraseña">👁️</button>
+                            </div>
+                        </div>
+
+                        <div class="cuenta-campo">
+                            <label for="cta-confirmar">Confirmar contraseña</label>
+                            <div class="cuenta-clave">
+                                <input type="password" id="cta-confirmar" class="input-field" maxlength="100" placeholder="Repite la contraseña" autocomplete="new-password">
+                                <button type="button" class="btn-ojo" onclick="window.toggleClavePanel('cta-confirmar', this)" aria-label="Mostrar u ocultar contraseña">👁️</button>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn-acceso">Crear cuenta</button>
+                    </form>
+
+                    <p id="cta-mensaje" class="cuenta-mensaje"></p>
+
+                    <p class="acceso-pie">¿Ya tienes cuenta? <a href="javascript:void(0)" onclick="mostrarPanelAcceso('login')">Inicia sesión</a></p>
+                </div>
+
+                <!-- PANEL: RECUPERAR CONTRASEÑA -->
+                <div id="acceso-recuperar" class="acceso-panel">
+                    <h2>Recuperar contraseña</h2>
+                    <p class="acceso-sub">Escribe tu usuario y confirma que eres tú con el celular o el correo que registraste.</p>
+
+                    <form id="form-recuperar" novalidate autocomplete="off">
+                        <div class="cuenta-campo">
+                            <label for="rec-usuario">Nombre de usuario</label>
+                            <input type="text" id="rec-usuario" class="input-field" maxlength="30" placeholder="Tu usuario" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false">
+                        </div>
+
+                        <div class="cuenta-campo">
+                            <label for="rec-contacto">Celular o correo registrado</label>
+                            <input type="text" id="rec-contacto" class="input-field" maxlength="120" placeholder="8 dígitos o correo completo">
+                        </div>
+
+                        <div class="cuenta-campo">
+                            <label for="rec-clave">Nueva contraseña</label>
+                            <div class="cuenta-clave">
+                                <input type="password" id="rec-clave" class="input-field" maxlength="100" placeholder="Mínimo 6 caracteres" autocomplete="new-password">
+                                <button type="button" class="btn-ojo" onclick="window.toggleClavePanel('rec-clave', this)" aria-label="Mostrar u ocultar contraseña">👁️</button>
+                            </div>
+                        </div>
+
+                        <div class="cuenta-campo">
+                            <label for="rec-confirmar">Confirmar nueva contraseña</label>
+                            <div class="cuenta-clave">
+                                <input type="password" id="rec-confirmar" class="input-field" maxlength="100" placeholder="Repite la contraseña" autocomplete="new-password">
+                                <button type="button" class="btn-ojo" onclick="window.toggleClavePanel('rec-confirmar', this)" aria-label="Mostrar u ocultar contraseña">👁️</button>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn-acceso">Cambiar contraseña</button>
+                    </form>
+
+                    <p id="rec-mensaje" class="cuenta-mensaje"></p>
+
+                    <p class="acceso-pie"><a href="javascript:void(0)" onclick="mostrarPanelAcceso('login')">← Volver a iniciar sesión</a></p>
+                </div>
+
+                <p class="acceso-admin">
+                    <a href="javascript:void(0)" onclick="entrarComoAdmin()">🔐 Acceso de administración</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
 
     <div id="vanta-bg" style="width: 100%; height: 100vh; position: fixed; top: 0; left: 0; z-index: -1;"></div>
     
@@ -21,13 +197,17 @@
             <li><a href="javascript:void(0)" onclick="verSeccion('actividades')">Actividades</a></li>
             <li><a href="javascript:void(0)" onclick="verSeccion('galeria')">Galería</a></li>
             <li><a href="javascript:void(0)" onclick="verSeccion('registro')">Inscripción</a></li>
+            <li id="nav-cuenta" class="nav-cuenta" style="display: none;">
+                <span id="nav-cuenta-nombre" class="nav-cuenta-nombre"></span>
+                <a href="javascript:void(0)" onclick="cerrarSesionCuenta()" class="nav-salir">Salir</a>
+            </li>
             <!-- Botón Login Admin -->
             <li><a href="javascript:void(0)" onclick="verSeccion('login')" style="color: var(--orange-main); font-weight: bold;">🔐 Ingreso Admin</a></li>
         </ul>
     </nav>
 
     <main>
-             <!-- SECCIÓN 1: INICIO (Activa por defecto) -->
+        <!-- SECCIÓN 1: INICIO (Activa por defecto) -->
         <div id="sec-inicio" class="seccion-page active">
             <div class="hero hero-split">
                 <div class="hero-text">
@@ -137,7 +317,8 @@
                 </div>
             </div>
         </div>
-      <!-- SECCIÓN 2 ACTIVIDADES -->
+
+        <!-- SECCIÓN 2: ACTIVIDADES -->
         <div id="sec-actividades" class="seccion-page">
             <h2 class="section-title">Actividades y Trayectoria</h2>
 
@@ -147,7 +328,7 @@
                 
                 <form id="formActividad" enctype="multipart/form-data">
                     <div class="form-row">
-                        <!-- Año / Gestión (Actualizado con límite desde 2018) -->
+                        <!-- Año / Gestión (límite desde 2018) -->
                         <input 
                             type="number" 
                             id="anioInput" 
@@ -193,6 +374,7 @@
             <!-- Contenedor dinámico de tarjetas estilo Instagram -->
             <div id="contenedor-actividades" class="cards-grid"></div>
         </div>
+
         <!-- SECCIÓN 3: GALERÍA -->
         <div id="sec-galeria" class="seccion-page">
             <h2 class="section-title">Galería de Eventos</h2>
@@ -297,7 +479,7 @@
                 </form>
             </div>
         </div>
-        
+
         <!-- SECCIÓN 5: LOGIN ADMIN -->
         <div id="sec-login" class="seccion-page">
             <div class="form-card" style="max-width: 400px; margin: 40px auto; text-align: center;">
@@ -316,16 +498,19 @@
             </div>
         </div>
 
-  <!-- SECCIÓN 6: PANEL DE ADMINISTRACIÓN -->
+        <!-- SECCIÓN 6: PANEL DE ADMINISTRACIÓN -->
         <div id="sec-panel" class="seccion-page">
             <!-- NAVEGACIÓN PRINCIPAL DEL PANEL -->
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; background: rgba(0,0,0,0.3); padding: 12px; border-radius: 8px; flex-wrap: wrap; gap: 10px;">
-                <div style="display: flex; gap: 10px;">
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                     <button id="btn-sec-planteles" type="button" onclick="mostrarSubModulo('planteles')" style="background: #ff6b00; color: white; padding: 10px 20px; font-weight: bold; border-radius: 5px; border: none; cursor: pointer;">
                         🏃 Gestión de Planteles
                     </button>
                     <button id="btn-sec-caja" type="button" onclick="mostrarSubModulo('caja')" style="background: #334155; color: white; padding: 10px 20px; font-weight: bold; border-radius: 5px; border: none; cursor: pointer;">
                         📋 Libro de Caja y Pagos
+                    </button>
+                    <button id="btn-sec-usuarios" type="button" onclick="mostrarSubModulo('usuarios')" style="background: #334155; color: white; padding: 10px 20px; font-weight: bold; border-radius: 5px; border: none; cursor: pointer;">
+                        👥 Usuarios y Cuentas
                     </button>
                 </div>
                 <div style="display: flex; gap: 10px;">
@@ -343,13 +528,13 @@
                     </div>
 
                     <div style="display: flex; gap: 10px;">
-                      <!-- Actualizado a PDF -->
-                       <a href="/api/jugadores/exportar-pdf?disciplina=balonmano" style="background-color: #dc2626; color: white; padding: 8px 14px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 0.85rem; text-decoration: none; display: inline-block;">
-    📄 Exportar Balonmano (PDF)
-                       </a>
-                       <a href="/api/jugadores/exportar-pdf?disciplina=futsal" style="background-color: #dc2626; color: white; padding: 8px 14px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 0.85rem; text-decoration: none; display: inline-block;">
-                          📄 Exportar Futsal (PDF)
-                       </a>
+                        <!-- Exportación a PDF -->
+                        <a href="/api/jugadores/exportar-pdf?disciplina=balonmano" style="background-color: #dc2626; color: white; padding: 8px 14px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 0.85rem; text-decoration: none; display: inline-block;">
+                            📄 Exportar Balonmano (PDF)
+                        </a>
+                        <a href="/api/jugadores/exportar-pdf?disciplina=futsal" style="background-color: #dc2626; color: white; padding: 8px 14px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 0.85rem; text-decoration: none; display: inline-block;">
+                            📄 Exportar Futsal (PDF)
+                        </a>
                     </div>
                 </div>
 
@@ -422,7 +607,7 @@
                             <span class="cobro-icon">💰</span>
                             <div>
                                 <h3>Registrar Pago de Mensualidad</h3>
-                                <p>Selecciona el atleta, el período y el método de pago</p>
+                                <p>Selecciona el atleta y el período. Si te equivocas, haz clic en el ✅ de la matriz para editar o anular el pago.</p>
                             </div>
                         </div>
 
@@ -461,14 +646,6 @@
                             <div class="cobro-field">
                                 <label for="pop-monto">Monto total</label>
                                 <input type="number" id="pop-monto" name="monto" value="80" readonly class="cobro-monto">
-                            </div>
-
-                            <div class="cobro-field">
-                                <label for="pop-metodo">Método de pago</label>
-                                <select id="pop-metodo" name="metodo_pago" required>
-                                    <option value="EFECTIVO">💵 Efectivo</option>
-                                    <option value="QR">📱 QR / Transf.</option>
-                                </select>
                             </div>
 
                             <div class="cobro-field cobro-field-btn">
@@ -524,9 +701,54 @@
                     </div>
                 </div> <!-- cierra card de caja -->
             </div> <!-- cierra submod-caja -->
-        </div> <!-- ✅ NUEVO: cierra sec-panel -->
 
-        <!-- SECCIÓN 7: CAMBIAR CONTRASEÑA (ahora es independiente de sec-panel) -->
+            <!-- SUB-MÓDULO 3: USUARIOS DEL SISTEMA Y CUENTAS REGISTRADAS -->
+            <div id="submod-usuarios" style="display: none;">
+                <div class="card" style="margin-bottom: 30px;">
+                    <div class="panel-encabezado">
+                        <h3 style="color: #6366f1;">👥 Usuarios del sistema</h3>
+                        <button type="button" class="btn-nuevo" onclick="nuevoUsuario()">➕ Nuevo usuario</button>
+                    </div>
+                    <div style="overflow-x: auto;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Nombre</th>
+                                    <th>Usuario</th>
+                                    <th>Rol</th>
+                                    <th>Celular</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabla-usuarios"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="panel-encabezado">
+                        <h3 style="color: #6366f1;">🧾 Cuentas registradas (entrenadores, atletas y padres)</h3>
+                    </div>
+                    <div style="overflow-x: auto;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Nombre</th>
+                                    <th>Rol</th>
+                                    <th>Usuario</th>
+                                    <th>Celular</th>
+                                    <th>Correo</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabla-cuentas"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div> <!-- cierra submod-usuarios -->
+        </div> <!-- cierra sec-panel -->
+
+        <!-- SECCIÓN 7: CAMBIAR CONTRASEÑA (independiente de sec-panel) -->
         <div id="sec-cambiar-clave" class="seccion-page">
             <h2 class="section-title" style="font-size: 1.5rem;">🔑 Cambiar mi Contraseña</h2>
             <div class="form-card" style="max-width: 400px; margin: 0 auto;">
@@ -549,7 +771,7 @@
                 <p id="mensaje-cambiar-clave" style="margin-top:10px;"></p>
             </div>
         </div>
-    </main> <!-- ✅ aquí ya no hay un </div> extra antes -->
+    </main>
 
     <!-- LIBRERÍAS EXTERNAS -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>

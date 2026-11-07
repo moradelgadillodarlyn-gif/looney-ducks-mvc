@@ -12,6 +12,8 @@ import {
     alternarOjito
 } from './modules/admin.js';
 
+import './modules/acceso.js';
+
 import { 
     cargarJugadores, 
     eliminarJugador, 
@@ -32,6 +34,10 @@ import {
 
 import { inicializarInicio } from './modules/inicio.js';
 import { cargarGaleria } from './modules/galeria.js';
+
+// NUEVO: registro de cuentas y panel de usuarios
+import { inicializarRegistroCuenta, inicializarRecuperacion } from './modules/registro.js';
+import { cargarPanelUsuarios } from './modules/usuarios.js';
 
 // Módulo Actividades Seguro (no rompe si falta algún export)
 import * as ActividadesModule from './modules/actividades.js';
@@ -55,6 +61,8 @@ export function verSeccion(id) {
         'actividades', 
         'galeria', 
         'registro', 
+        'cuenta',       // NUEVO: crear cuenta
+        'recuperar',    // NUEVO: recuperar contraseña
         'login', 
         'panel', 
         'cambiar-clave'
@@ -89,22 +97,21 @@ export function verSeccion(id) {
 }
 
 export function mostrarSubModulo(submodulo) {
-    const subPlanteles = document.getElementById('submod-planteles');
-    const subCaja = document.getElementById('submod-caja');
-    const btnPlanteles = document.getElementById('btn-sec-planteles');
-    const btnCaja = document.getElementById('btn-sec-caja');
+    const modulos = {
+        planteles: { panel: 'submod-planteles', boton: 'btn-sec-planteles', color: '#ff6b00' },
+        caja:      { panel: 'submod-caja',      boton: 'btn-sec-caja',      color: '#10b981' },
+        usuarios:  { panel: 'submod-usuarios',  boton: 'btn-sec-usuarios',  color: '#6366f1' }
+    };
 
-    if (submodulo === 'planteles') {
-        if (subPlanteles) subPlanteles.style.display = 'block';
-        if (subCaja) subCaja.style.display = 'none';
-        if (btnPlanteles) btnPlanteles.style.background = '#ff6b00';
-        if (btnCaja) btnCaja.style.background = '#334155';
-    } else if (submodulo === 'caja') {
-        if (subPlanteles) subPlanteles.style.display = 'none';
-        if (subCaja) subCaja.style.display = 'block';
-        if (btnPlanteles) btnPlanteles.style.background = '#334155';
-        if (btnCaja) btnCaja.style.background = '#10b981';
-    }
+    Object.entries(modulos).forEach(([nombre, m]) => {
+        const panel = document.getElementById(m.panel);
+        const boton = document.getElementById(m.boton);
+        const activo = nombre === submodulo;
+        if (panel) panel.style.display = activo ? 'block' : 'none';
+        if (boton) boton.style.background = activo ? m.color : '#334155';
+    });
+
+    if (submodulo === 'usuarios') cargarPanelUsuarios();
 }
 
 export function cambiarPestanaPlantel(disciplina) {
@@ -168,6 +175,10 @@ document.addEventListener('DOMContentLoaded', () => {
         inicializarValidacionTutor();
     }
 
+    // NUEVO: formularios de crear cuenta y recuperar contraseña
+    inicializarRegistroCuenta();
+    inicializarRecuperacion();
+
     const inputNombre = document.getElementById('reg-nombre') || document.querySelector('input[name="nombre"]');
     if (inputNombre && typeof formatearNombreInput === 'function') {
         formatearNombreInput(inputNombre);
@@ -214,7 +225,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const cantidadMeses = parseInt(document.getElementById('pop-cantidad-meses')?.value || '1');
             const elAnio = document.getElementById('filtro-gestion-anio');
             const anio = Number(elAnio ? elAnio.value : new Date().getFullYear());
-            const metodo_pago = document.getElementById('pop-metodo')?.value || 'EFECTIVO';
 
             if (!jugador_id) return alert('Selecciona un atleta primero.');
 
@@ -233,7 +243,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const res = await fetch('/api/pagos', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ jugador_id, anio: anioPago, mes: mesAProcesar, monto: 80, metodo_pago })
+                        body: JSON.stringify({ jugador_id, anio: anioPago, mes: mesAProcesar, monto: 80 })
                     });
 
                     if (res.ok) {
@@ -248,7 +258,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             if (fallidos.length === 0) {
-                alert(`✅ Se registró el pago de ${registrados} mes(es).`);
+                alert(`✅ Se registró el pago de ${registrados} mes(es). Si te equivocas, haz clic en el ✅ de la matriz para editarlo o anularlo.`);
             } else {
                 alert(`Se registraron ${registrados} de ${cantidadMeses} mes(es).\n\nNo se pudieron registrar:\n- ${fallidos.join('\n- ')}`);
             }
@@ -287,6 +297,9 @@ window.darMeGusta = darMeGusta;
 window.agregarComentario = agregarComentario;
 window.alternarGuardado = alternarGuardado;
 window.compartirPost = compartirPost;
+
+// Galería (la usa la edición de actividades para refrescarse)
+window.cargarGaleria = cargarGaleria;
 
 // Garantiza que Inicio se vea al terminar de cargar todo
 window.addEventListener('load', () => {

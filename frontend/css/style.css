@@ -34,7 +34,7 @@ nav {
 
 .nav-logo { font-family: 'Orbitron', sans-serif; font-size: 1.3rem; color: #fff; text-decoration: none; }
 .nav-logo span { color: var(--orange-main); }
-.nav-links { display: flex; gap: 40px; list-style: none; align-items: center; }
+.nav-links { display: flex; gap: 28px; flex-wrap: wrap; list-style: none; align-items: center; }
 .nav-links a { color: var(--text-light); text-decoration: none; font-weight: 600; font-size: 0.9rem; cursor: pointer; }
 .nav-links a:hover { color: var(--orange-main); }
 
@@ -305,11 +305,73 @@ h2.section-title {
 .info-box { background: var(--purple-card); padding: 35px; border-radius: 15px; border: 1px solid rgba(255,107,0,0.1); }
 .info-box h3 { color: var(--orange-main); margin-bottom: 10px; font-family: 'Orbitron', sans-serif; }
 
-/* GALERÍA */
-.galeria-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; }
-.galeria-item { background: #3d2358; border-radius: 10px; overflow: hidden; border: 1px solid rgba(67, 17, 117, 0.2); text-align: center; padding-bottom: 10px; }
+/* ==========================================
+   GALERÍA (grilla, filtros por año y visor)
+   ========================================== */
+.galeria-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 15px; }
+.galeria-item {
+    background: #3d2358;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid rgba(67, 17, 117, 0.2);
+    text-align: center;
+    padding-bottom: 10px;
+    cursor: pointer;
+    transition: transform 0.2s ease, border-color 0.2s ease;
+}
+.galeria-item:hover { transform: translateY(-4px); border-color: var(--orange-main); }
 .galeria-item img { width: 100%; height: 160px; object-fit: cover; }
-.galeria-item p { font-size: 0.85rem; padding: 8px; color: var(--text-muted); }
+.galeria-item p { font-size: 0.85rem; padding: 8px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.galeria-vacio { grid-column: 1 / -1; text-align: center; color: var(--text-muted); padding: 40px 20px; }
+
+.galeria-filtros { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-bottom: 25px; }
+.galeria-filtro {
+    padding: 8px 18px;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 107, 0, 0.4);
+    color: var(--text-light);
+    font-size: 0.85rem;
+    letter-spacing: 0;
+    text-transform: none;
+}
+.galeria-filtro:hover { transform: none; background: rgba(255, 107, 0, 0.2); }
+.galeria-filtro.activo { background: var(--orange-main); border-color: var(--orange-main); }
+
+/* Visor de foto ampliada */
+.galeria-visor {
+    position: fixed;
+    inset: 0;
+    z-index: 3000;
+    background: rgba(0, 0, 0, 0.92);
+    align-items: center;
+    justify-content: center;
+}
+.galeria-visor img { max-width: 92vw; max-height: 80vh; object-fit: contain; border-radius: 8px; }
+.visor-cerrar,
+.visor-flecha {
+    position: absolute;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.15);
+    color: #fff;
+    line-height: 1;
+    letter-spacing: 0;
+    text-transform: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+.visor-cerrar:hover,
+.visor-flecha:hover { transform: none; background: rgba(255, 107, 0, 0.8); }
+.visor-cerrar { top: 20px; right: 20px; width: 40px; height: 40px; font-size: 18px; }
+.visor-flecha { top: calc(50% - 22px); width: 44px; height: 44px; font-size: 26px; }
+.visor-flecha.izq { left: 20px; }
+.visor-flecha.der { right: 20px; }
+.visor-pie { position: absolute; bottom: 24px; left: 0; right: 0; text-align: center; color: #e2e8f0; font-size: 0.85rem; padding: 0 60px; }
 
 /* FORMULARIOS GENERALES E INSCRIPCIÓN */
 .form-inscripcion { background: var(--purple-card); padding: 30px; border-radius: 20px; max-width: 550px; margin: 0 auto; border: 1px solid var(--orange-main); }
@@ -317,6 +379,7 @@ form { display: flex; flex-direction: column; gap: 12px; }
 input, select { padding: 14px; background: #09040e; border: 2px solid #2c1849; border-radius: 10px; color: #fff; font-size: 0.9rem; outline: none; }
 input:focus, select:focus { border-color: var(--orange-main); box-shadow: 0 0 10px rgba(255,107,0,0.4); }
 select:disabled { opacity: 0.5; cursor: not-allowed; }
+select option { background: #1a1130; color: #fff; }
 .campo-label { color: var(--text-muted); font-size: 0.8rem; margin-bottom: -5px; }
 .fecha-grid { display: grid; grid-template-columns: 1fr 1.5fr 1fr; gap: 8px; }
 
@@ -815,19 +878,260 @@ th { color: var(--orange-main); font-family: 'Orbitron', sans-serif; }
     visibility: visible !important;
     transform: none !important;
 }
-/* ===== Galería: filtros y visor ===== */
-.galeria-filtros { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-bottom: 20px; }
-.galeria-filtro { padding: 8px 16px; border-radius: 20px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,107,0,0.4); font-size: 0.8rem; letter-spacing: 0; }
-.galeria-filtro.activo { background: var(--orange-main); }
-.galeria-item { cursor: pointer; }
-.galeria-vacio { grid-column: 1 / -1; text-align: center; color: var(--text-muted); padding: 40px 0; }
 
-.galeria-visor { position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 3000; align-items: center; justify-content: center; flex-direction: column; }
-.galeria-visor img { max-width: 90vw; max-height: 80vh; object-fit: contain; }
-.visor-cerrar, .visor-flecha { position: absolute; width: 44px; height: 44px; padding: 0; border-radius: 50%; background: rgba(255,255,255,0.15); font-size: 22px; letter-spacing: 0; display: flex; align-items: center; justify-content: center; }
-.visor-cerrar { top: 20px; right: 20px; }
-.visor-flecha { top: 50%; transform: translateY(-50%); }
-.visor-flecha:hover { transform: translateY(-50%); }
-.visor-flecha.izq { left: 20px; }
-.visor-flecha.der { right: 20px; }
-.visor-pie { position: absolute; bottom: 20px; left: 0; right: 0; text-align: center; color: #fff; font-size: 0.9rem; }
+/* ==========================================
+   CUENTAS (crear cuenta y recuperar contraseña)
+   ========================================== */
+.cuenta-campo { margin-bottom: 15px; }
+.cuenta-campo label { display: block; color: var(--text-muted); font-size: 0.85rem; margin-bottom: 6px; }
+.cuenta-ayuda { color: var(--text-muted); font-size: 0.85rem; line-height: 1.5; margin-bottom: 20px; }
+
+/* Campo de contraseña con ojito (sirve también dentro del editor) */
+.cuenta-clave { position: relative; display: flex; align-items: center; }
+.cuenta-clave input { width: 100%; padding-right: 45px !important; }
+.btn-ojo {
+    position: absolute;
+    right: 10px;
+    padding: 0;
+    background: transparent;
+    border: none;
+    font-size: 1.2rem;
+    letter-spacing: 0;
+    text-transform: none;
+    cursor: pointer;
+}
+.btn-ojo:hover { transform: none; }
+
+/* Mensaje de resultado (también lo usa el error del editor) */
+.cuenta-mensaje { padding: 10px 14px; border-radius: 10px; font-size: 0.85rem; margin-top: 12px; }
+.cuenta-mensaje:empty { display: none; }
+.cuenta-mensaje.ok { background: rgba(16,185,129,0.15); border: 1px solid var(--success); color: #6ee7b7; }
+.cuenta-mensaje.error { background: rgba(244,63,94,0.15); border: 1px solid var(--danger); color: #fca5a5; }
+
+.cuenta-enlaces { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-top: 18px; font-size: 0.85rem; }
+.cuenta-enlaces a { color: var(--orange-main); text-decoration: none; font-weight: 600; cursor: pointer; }
+.cuenta-enlaces a:hover { text-decoration: underline; }
+
+/* ==========================================
+   PANEL DE USUARIOS (administración)
+   ========================================== */
+.panel-encabezado { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 15px; }
+.btn-nuevo { background: linear-gradient(135deg, var(--success), #0d9488); padding: 10px 18px; font-size: 0.8rem; border-radius: 10px; letter-spacing: 1px; }
+
+.btn-tabla { padding: 6px 12px; font-size: 0.7rem; border-radius: 8px; letter-spacing: 1px; margin: 2px; }
+.btn-tabla.azul { background: #2563eb; }
+.btn-tabla.rojo { background: var(--danger); }
+.btn-tabla:hover { transform: none; filter: brightness(1.15); }
+
+/* Ventana emergente genérica (editor.js) */
+#editor-generico { z-index: 3500; }
+#editor-generico .editor-campo input,
+#editor-generico .editor-campo select,
+#editor-generico .editor-campo textarea { width: 100%; }
+#editor-generico .modal-botones button { padding: 12px 16px; border-radius: 10px; font-size: 0.85rem; letter-spacing: 1px; }
+
+/* ==========================================
+   PANTALLA DE ACCESO (iniciar sesión / crear cuenta / recuperar)
+   Los aros del fondo salen del logo: el escudo ya está hecho de círculos concéntricos.
+   ========================================== */
+body.acceso-bloqueado { overflow: hidden; }
+
+.acceso-pantalla {
+    position: fixed;
+    inset: 0;
+    z-index: 5000;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    overflow-y: auto;
+    background:
+        radial-gradient(circle at 25% 50%, rgba(255, 107, 0, 0.18) 0%, transparent 45%),
+        radial-gradient(circle at 550px 100%, var(--purple-deep) 0%, var(--bg-dark) 100%);
+}
+.acceso-pantalla.oculto { display: none; }
+
+/* ----- Lado de la marca ----- */
+.acceso-marca {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 24px;
+    text-align: center;
+    overflow: hidden;
+}
+
+.acceso-emblema {
+    position: relative;
+    width: 230px;
+    height: 230px;
+    margin-bottom: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.acceso-aros { position: absolute; top: 50%; left: 50%; width: 0; height: 0; }
+.acceso-aros span {
+    position: absolute;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 107, 0, 0.4);
+    transform: translate(-50%, -50%);
+    animation: aroPulso 6s ease-in-out infinite;
+}
+.acceso-aros span:nth-child(1) { width: 310px; height: 310px; }
+.acceso-aros span:nth-child(2) { width: 440px; height: 440px; border-color: rgba(255, 107, 0, 0.28); animation-delay: 0.8s; }
+.acceso-aros span:nth-child(3) { width: 580px; height: 580px; border-color: rgba(255, 107, 0, 0.18); animation-delay: 1.6s; }
+.acceso-aros span:nth-child(4) { width: 740px; height: 740px; border-color: rgba(255, 107, 0, 0.1); animation-delay: 2.4s; }
+
+@keyframes aroPulso {
+    0%, 100% { transform: translate(-50%, -50%) scale(0.97); opacity: 1; }
+    50%      { transform: translate(-50%, -50%) scale(1.03); opacity: 0.4; }
+}
+
+.acceso-logo {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: #ffffff;
+    overflow: hidden;
+    border: 4px solid rgba(255, 107, 0, 0.5);
+    box-shadow: 0 0 40px rgba(255, 107, 0, 0.6);
+}
+.acceso-logo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+.acceso-titulo {
+    position: relative;
+    z-index: 1;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 2.4rem;
+    line-height: 1.1;
+}
+.acceso-titulo span { color: var(--orange-main); text-shadow: 0 0 15px rgba(255, 107, 0, 0.5); }
+.acceso-lema { position: relative; z-index: 1; color: var(--text-muted); font-size: 0.95rem; margin-top: 10px; max-width: 320px; }
+
+/* ----- Lado del formulario ----- */
+.acceso-lado { display: flex; align-items: center; justify-content: center; padding: 40px 24px; }
+
+.acceso-tarjeta {
+    width: 100%;
+    max-width: 460px;
+    background: rgba(30, 20, 50, 0.78);
+    border: 1px solid rgba(255, 107, 0, 0.45);
+    border-radius: 20px;
+    padding: 30px 30px 24px;
+    backdrop-filter: blur(14px);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.55);
+}
+
+.acceso-tabs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
+    padding: 4px;
+    margin-bottom: 24px;
+    background: rgba(0, 0, 0, 0.35);
+    border-radius: 12px;
+}
+.acceso-tabs.oculto { display: none; }
+.acceso-tab {
+    padding: 10px 12px;
+    border-radius: 9px;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    font-weight: 600;
+    letter-spacing: 0;
+    text-transform: none;
+}
+.acceso-tab:hover { transform: none; color: var(--text-light); }
+.acceso-tab.activo {
+    background: linear-gradient(135deg, var(--orange-main), #b83200);
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(255, 107, 0, 0.35);
+}
+
+.acceso-panel { display: none; }
+.acceso-panel.activo { display: block; animation: accesoEntrada 0.35s ease; }
+@keyframes accesoEntrada {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: none; }
+}
+
+.acceso-panel h2 { font-family: 'Orbitron', sans-serif; font-size: 1.25rem; margin-bottom: 6px; }
+.acceso-sub { color: var(--text-muted); font-size: 0.88rem; line-height: 1.5; margin-bottom: 22px; }
+.acceso-nota {
+    background: rgba(255, 107, 0, 0.1);
+    border: 1px solid rgba(255, 107, 0, 0.3);
+    border-radius: 10px;
+    padding: 10px 12px;
+    margin-bottom: 18px;
+    font-size: 0.8rem;
+    line-height: 1.5;
+    color: #e2d4ff;
+}
+.acceso-ayuda { color: var(--text-muted); font-size: 0.75rem; margin-top: 6px; }
+
+.acceso-pantalla form { gap: 0; }
+.acceso-pantalla .cuenta-campo { margin-bottom: 14px; }
+
+.btn-acceso {
+    width: 100%;
+    margin-top: 6px;
+    padding: 14px 20px;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    letter-spacing: 0.5px;
+    text-transform: none;
+    box-shadow: 0 8px 22px rgba(255, 107, 0, 0.3);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.btn-acceso:hover { transform: translateY(-2px); box-shadow: 0 12px 28px rgba(255, 107, 0, 0.45); }
+.btn-acceso:disabled { opacity: 0.7; cursor: wait; transform: none; }
+
+.acceso-enlaces { text-align: center; margin-top: 16px; font-size: 0.85rem; }
+.acceso-pie { text-align: center; margin-top: 14px; color: var(--text-muted); font-size: 0.85rem; }
+.acceso-enlaces a, .acceso-pie a { color: var(--orange-main); font-weight: 600; text-decoration: none; cursor: pointer; }
+.acceso-enlaces a:hover, .acceso-pie a:hover { text-decoration: underline; }
+
+.acceso-admin {
+    text-align: center;
+    margin-top: 22px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    font-size: 0.8rem;
+}
+.acceso-admin a { color: var(--text-muted); text-decoration: none; cursor: pointer; }
+.acceso-admin a:hover { color: var(--orange-main); }
+
+/* ----- Nombre de la cuenta en el menú ----- */
+.nav-cuenta {
+    align-items: center;
+    gap: 12px;
+    padding: 6px 14px;
+    background: rgba(255, 107, 0, 0.12);
+    border: 1px solid rgba(255, 107, 0, 0.35);
+    border-radius: 20px;
+}
+.nav-cuenta-nombre { font-size: 0.85rem; font-weight: 600; }
+.nav-links .nav-salir { color: var(--orange-main); }
+
+/* ----- Celular y tablet ----- */
+@media (max-width: 900px) {
+    .acceso-pantalla { grid-template-columns: 1fr; }
+    .acceso-marca { padding: 28px 20px 4px; }
+    .acceso-emblema { width: 120px; height: 120px; margin-bottom: 16px; }
+    .acceso-aros span:nth-child(1) { width: 170px; height: 170px; }
+    .acceso-aros span:nth-child(2) { width: 240px; height: 240px; }
+    .acceso-aros span:nth-child(n+3) { display: none; }
+    .acceso-titulo { font-size: 1.7rem; }
+    .acceso-lema { display: none; }
+    .acceso-lado { padding: 20px 16px 32px; }
+    .acceso-tarjeta { padding: 24px 20px 20px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .acceso-aros span, .acceso-panel.activo { animation: none; }
+}

@@ -1,5 +1,6 @@
 // js/modules/actividades.js
 import { esAdmin } from './admin.js';
+import { abrirEditor } from './editor.js';
 
 // Evita que un texto con < > " ' rompa el HTML de la tarjeta
 export function escapar(texto) {
@@ -167,6 +168,7 @@ export async function cargarActividades() {
                         </div>
                     </div>
                     <div style="display: flex; align-items: center; gap: 8px;">
+                        ${esUsuarioAdmin ? `<button class="btn-editar-act" style="background: transparent; border: none; color: #0095f6; cursor: pointer; font-size: 12px; font-weight: bold; padding: 0; letter-spacing: 0; text-transform: none;">Editar</button>` : ''}
                         ${esUsuarioAdmin ? `<button class="btn-eliminar" style="background: transparent; border: none; color: #ed4956; cursor: pointer; font-size: 12px; font-weight: bold;">Eliminar</button>` : ''}
                         <span style="color: #f5f5f5; font-size: 18px; cursor: pointer;">•••</span>
                     </div>
@@ -215,6 +217,9 @@ export async function cargarActividades() {
             const likesCountEl = article.querySelector('.likes-count');
             if (btnLike) btnLike.addEventListener('click', () => darMeGustaBD(act.id, likesCountEl, btnLike));
 
+            const btnEditar = article.querySelector('.btn-editar-act');
+            if (btnEditar) btnEditar.addEventListener('click', () => editarActividadBD(act));
+
             const btnEliminar = article.querySelector('.btn-eliminar');
             if (btnEliminar) btnEliminar.addEventListener('click', () => eliminarActividadBD(act.id));
 
@@ -225,6 +230,33 @@ export async function cargarActividades() {
         console.error('Error al cargar actividades:', err);
         contenedor.innerHTML = '<p style="color: #ed4956; text-align: center;">Error de conexión con el servidor.</p>';
     }
+}
+
+// Ventana para corregir año, título y descripción de una publicación (las fotos no cambian)
+export function editarActividadBD(act) {
+    abrirEditor({
+        titulo: '✏️ Editar publicación',
+        campos: [
+            { id: 'anio', etiqueta: 'Año / Gestión', tipo: 'number', valor: act.anio ?? act.gestion ?? new Date().getFullYear(), requerido: true, min: 2018, max: 2099, step: 1 },
+            { id: 'titulo', etiqueta: 'Título', tipo: 'text', valor: act.titulo || '', requerido: true, maxlength: 150 },
+            { id: 'descripcion', etiqueta: 'Descripción', tipo: 'textarea', valor: act.descripcion || '' }
+        ],
+        onGuardar: async (v) => {
+            if (!v.titulo) throw new Error('El título es obligatorio.');
+
+            const res = await fetch(`/api/actividades/${Number(act.id)}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ anio: Number(v.anio), titulo: v.titulo, descripcion: v.descripcion })
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(data.error || 'No se pudo actualizar la actividad.');
+
+            await cargarActividades();
+            // La galería se arma con estas mismas publicaciones
+            if (typeof window.cargarGaleria === 'function') window.cargarGaleria();
+        }
+    });
 }
 
 export async function darMeGustaBD(id, countEl, btnLike) {

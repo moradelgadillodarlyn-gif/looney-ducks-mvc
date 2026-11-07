@@ -1,7 +1,14 @@
 // js/modules/jugadores.js
+import { abrirEditor, filtrarNombre, filtrarTelefono } from './editor.js';
 
 // Nadie nacido después de este año puede inscribirse (2026 en adelante queda bloqueado)
 const ANIO_MAX_NACIMIENTO = 2025;
+const ANIO_MIN_NACIMIENTO = 1950;
+
+const POSICIONES_POR_DISCIPLINA = {
+    "Handball": ["Portero/a", "Central", "Lateral Izquierdo", "Lateral Derecho", "Extremo Izquierdo", "Extremo Derecho", "Pivote"],
+    "Futsal": ["Guardameta", "Cierre", "Ala Izquierdo", "Ala Derecho", "Pívot"]
+};
 
 // Evita que un texto con < > " ' se interprete como HTML
 function escapar(texto) {
@@ -12,6 +19,9 @@ function escapar(texto) {
 
 // Posiciones que pertenecen a futsal (el resto se considera balonmano)
 const POSICIONES_FUTSAL = ['guardameta', 'cierre', 'ala izquierdo', 'ala derecho', 'pívot'];
+
+// Lista de atletas cargada por última vez (la usa la ventana de edición)
+let jugadoresCache = [];
 
 export function calcularEdadYCategoria(fechaNacimientoStr) {
     if (!fechaNacimientoStr) return { edad: '-', categoria: 'Sin Fecha' };
@@ -39,12 +49,8 @@ export function actualizarPosiciones() {
     if (!disciplina) { posicionSelect.disabled = true; return; }
 
     posicionSelect.disabled = false;
-    const posiciones = {
-        "Handball": ["Portero/a", "Central", "Lateral Izquierdo", "Lateral Derecho", "Extremo Izquierdo", "Extremo Derecho", "Pivote"],
-        "Futsal": ["Guardameta", "Cierre", "Ala Izquierdo", "Ala Derecho", "Pívot"]
-    };
 
-    (posiciones[disciplina] || []).forEach(pos => {
+    (POSICIONES_POR_DISCIPLINA[disciplina] || []).forEach(pos => {
         const opt = document.createElement("option");
         opt.value = pos;
         opt.textContent = pos;
@@ -79,10 +85,20 @@ export function inicializarValidacionTutor() {
 
 export function esTelefonoTutorValido(telefono) {
     if (!/^\d{8}$/.test(telefono)) return false;
-    if (/(\d)\1{3,}/.test(telefono)) return false; 
+    if (/(\d)\1{3,}/.test(telefono)) return false;
     const distintos = new Set(telefono.split('')).size;
-    if (distintos <= 2) return false; 
+    if (distintos <= 2) return false;
     return true;
+}
+
+// Recibe 'AAAA-MM-DD' y dice si la persona aún no cumple 18 años
+function esMenorDeEdadPorFecha(fechaStr) {
+    const [a, m, d] = String(fechaStr || '').split('-').map(Number);
+    if (!a || !m || !d) return false;
+    const hoy = new Date();
+    let edad = hoy.getFullYear() - a;
+    if (hoy.getMonth() + 1 < m || (hoy.getMonth() + 1 === m && hoy.getDate() < d)) edad--;
+    return edad < 18;
 }
 
 export function verificarEdad() {
@@ -220,6 +236,7 @@ export async function cargarJugadores() {
         const res = await fetch('/api/jugadores');
         if (!res.ok) return;
         const lista = await res.json();
+        jugadoresCache = lista;
 
         const tbodyBalonmano = document.getElementById('tabla-balonmano');
         const tbodyFutsal = document.getElementById('tabla-futsal');
@@ -248,6 +265,9 @@ export async function cargarJugadores() {
                     </span>
                 </td>
                 <td>
+                    <button onclick="window.editarJugador(${Number(j.id)})" style="background:#3b82f6; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer; margin-right:6px;">
+                        EDITAR
+                    </button>
                     <button onclick="window.eliminarJugador(${Number(j.id)})" style="background:#ef4444; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer;">
                         ELIMINAR
                     </button>
@@ -260,6 +280,69 @@ export async function cargarJugadores() {
     } catch (err) {
         console.error('Error al cargar jugadores:', err);
     }
+}
+
+// Abre la ventana para corregir los datos de un atleta
+export function editarJugador(id) {
+    const j = jugadoresCache.find(x => Number(x.id) === Number(id));
+    if (!j) {
+        alert('No se encontró el atleta. Recarga el panel e inténtalo de nuevo.');
+        return;
+    }
+
+    // Si el atleta antiguo no tiene disciplina guardada, se deduce por su posición
+    const posActual = String(j.posicion || '').toLowerCase().trim();
+    const disciplinaActual = j.disciplina
+        || (POSICIONES_FUTSAL.includes(posActual) ? 'Futsal' : 'Handball');
+
+    abrirEditor({
+        titulo: '✏️ Editar atleta',
+        campos: [
+            { id: 'nombre', etiqueta: 'Nombre completo', tipo: 'text', valor: j.nombre || j.nombre_completo || '', requerido: true, maxlength: 100, filtro: filtrarNombre },
+            { id: 'disciplina', etiqueta: 'Disciplina', tipo: 'select', valor: disciplinaActual, requerido: true, opciones: ['Handball', 'Futsal'] },
+            { id: 'posicion', etiqueta: 'Posición de juego', tipo: 'select', valor: j.posicion || '', requerido: true, opciones: (v) => POSICIONES_POR_DISCIPLINA[v.disciplina] || [] },
+            { id: 'fecha_nacimiento', etiqueta: 'Fecha de nacimiento', tipo: 'date', valor: String(j.fecha_nacimiento || '').slice(0, 10), requerido: true, min: `${ANIO_MIN_NACIMIENTO}-01-01`, max: `${ANIO_MAX_NACIMIENTO}-12-31` },
+            { id: 'rama', etiqueta: 'Rama', tipo: 'select', valor: j.rama || '', requerido: true, opciones: ['Masculino', 'Femenino'] },
+            { id: 'tutor_nombre', etiqueta: 'Nombre del tutor (menor de edad)', tipo: 'text', valor: j.tutor_nombre || '', requerido: true, maxlength: 100, filtro: filtrarNombre, mostrarSi: (v) => esMenorDeEdadPorFecha(v.fecha_nacimiento) },
+            { id: 'tutor_telefono', etiqueta: 'Teléfono del tutor (8 dígitos)', tipo: 'tel', valor: j.tutor_telefono || '', requerido: true, maxlength: 8, filtro: filtrarTelefono, mostrarSi: (v) => esMenorDeEdadPorFecha(v.fecha_nacimiento) }
+        ],
+        onGuardar: async (v) => {
+            if (!v.nombre || !v.disciplina || !v.posicion || !v.fecha_nacimiento || !v.rama) {
+                throw new Error('Completa todos los campos obligatorios.');
+            }
+            if (parseInt(v.fecha_nacimiento.slice(0, 4)) > ANIO_MAX_NACIMIENTO) {
+                throw new Error(`No se pueden inscribir atletas nacidos en ${ANIO_MAX_NACIMIENTO + 1} o después.`);
+            }
+
+            const cuerpo = {
+                nombre: v.nombre,
+                disciplina: v.disciplina,
+                posicion: v.posicion,
+                fecha_nacimiento: v.fecha_nacimiento,
+                rama: v.rama
+            };
+
+            if (esMenorDeEdadPorFecha(v.fecha_nacimiento)) {
+                if (!v.tutor_nombre) throw new Error('El atleta es menor de edad: el nombre del tutor es obligatorio.');
+                if (!esTelefonoTutorValido(v.tutor_telefono)) {
+                    throw new Error('El teléfono del tutor debe tener 8 dígitos y no puede ser un número repetitivo.');
+                }
+                cuerpo.tutor_nombre = v.tutor_nombre;
+                cuerpo.tutor_telefono = v.tutor_telefono;
+            }
+
+            const res = await fetch(`/api/jugadores/${Number(id)}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(cuerpo)
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(data.error || 'No se pudo actualizar el atleta.');
+
+            await cargarJugadores();
+            if (typeof window.cargarMatrizMeses === 'function') window.cargarMatrizMeses();
+        }
+    });
 }
 
 export async function eliminarJugador(id) {
@@ -316,7 +399,7 @@ export function poblarFechas() {
 
     if (anioSelect && anioSelect.options.length <= 1) {
         anioSelect.innerHTML = '<option value="">Año de nacimiento</option>';
-        for (let i = ANIO_MAX_NACIMIENTO; i >= 1950; i--) {
+        for (let i = ANIO_MAX_NACIMIENTO; i >= ANIO_MIN_NACIMIENTO; i--) {
             const opt = document.createElement('option');
             opt.value = i;
             opt.textContent = i;
@@ -330,10 +413,10 @@ export function formatearNombreInput(input) {
     input.addEventListener('input', (e) => {
         let cursorPosition = e.target.selectionStart;
         let valor = e.target.value;
-        
+
         // 1. Bloquear y eliminar cualquier número o símbolo extraño en tiempo real
         valor = valor.replace(/[^A-Za-zÁÉÍÓÚáéíóúÑñ\s]/g, '');
-        
+
         // 2. Formatear cada palabra: Primera letra en Mayúscula y el resto en minúscula
         valor = valor.toLowerCase().replace(/(^|\s)\S/g, l => l.toUpperCase());
 
@@ -341,3 +424,6 @@ export function formatearNombreInput(input) {
         e.target.setSelectionRange(cursorPosition, cursorPosition);
     });
 }
+
+// Para que el botón EDITAR (onclick inline) encuentre la función
+window.editarJugador = editarJugador;
