@@ -6,6 +6,7 @@ const { requireAuth } = require('../middlewares/auth');
 router.get('/', requireAuth, PagoController.getAll);
 router.get('/matriz/:anio', requireAuth, PagoController.getMatrizAnual);
 router.post('/', requireAuth, PagoController.create);
+router.put('/:id', requireAuth, PagoController.update);
 router.delete('/:id', requireAuth, PagoController.remove);
 
 module.exports = router;

@@ -26,6 +26,9 @@ router.post('/', esAdmin, (req, res, next) => {
     });
 }, actividadController.createActividad);
 
+// Editar año, título y descripción (solo administrador)
+router.put('/:id', esAdmin, actividadController.updateActividad);
+
 router.delete('/:id', esAdmin, actividadController.deleteActividad);
 router.post('/:id/like', actividadController.toggleLike);
 router.get('/:id/comentarios', actividadController.getComentarios);

@@ -52,8 +52,15 @@ const UsuarioModel = {
     },
 
     // Eliminación lógica: NO borra la fila, solo marca estado = 1
+    // También libera el nombre de usuario (le agrega "~id") para poder volver a usarlo.
     async softDelete(id) {
-        await pool.query('UPDATE usuarios SET estado = 1 WHERE id = ?', [id]);
+        await pool.query(
+            `UPDATE usuarios
+             SET estado = 1,
+                 usuario = CONCAT(LEFT(usuario, 50 - CHAR_LENGTH(id) - 1), '~', id)
+             WHERE id = ? AND estado = 0`,
+            [id]
+        );
     }
 };
 

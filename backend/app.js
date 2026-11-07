@@ -17,6 +17,7 @@ const jugadorRoutes = require('./routes/jugadorRoutes');
 const pagoRoutes = require('./routes/pagoRoutes');
 const actividadRoutes = require('./routes/actividadRoutes');
 const inicioRoutes = require('./routes/inicioRoutes');
+const cuentaRoutes = require('./routes/cuentaRoutes'); // NUEVO: entrenadores, atletas y padres
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -57,6 +58,7 @@ app.use('/api/jugadores', jugadorRoutes);
 app.use('/api/pagos', pagoRoutes);
 app.use('/api/actividades', actividadRoutes);
 app.use('/api/inicio', inicioRoutes);
+app.use('/api/cuentas', cuentaRoutes); // NUEVO
 
 app.listen(PORT, () => {
     console.log(`Sistema Administrativo (MVC) en: http://localhost:${PORT}`);

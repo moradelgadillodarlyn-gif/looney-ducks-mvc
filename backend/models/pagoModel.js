@@ -1,13 +1,21 @@
 const pool = require('../config/db');
 
 const PagoModel = {
-    async getAll() {
+    // Si se pasa el año, solo devuelve los pagos de esa gestión
+    async getAll(anio) {
+        const params = [];
+        let filtroAnio = '';
+        if (anio) {
+            filtroAnio = 'AND p.anio = ?';
+            params.push(Number(anio));
+        }
         const [rows] = await pool.query(
             `SELECT p.*, j.nombre AS jugador_nombre, j.rama AS jugador_rama
              FROM pagos p
              JOIN jugadores j ON j.id = p.jugador_id
-             WHERE p.estado = 0 AND j.estado = 0
-             ORDER BY p.fecha_pago DESC`
+             WHERE p.estado = 0 AND j.estado = 0 ${filtroAnio}
+             ORDER BY p.fecha_pago DESC`,
+            params
         );
         return rows;
     },
@@ -47,6 +55,16 @@ const PagoModel = {
             [jugador_id, anio, mes, monto, usuarios_id || null]
         );
         return result.insertId;
+    },
+
+    // Edición: corrige el mes, el año o el monto de un pago ya registrado.
+    // Devuelve cuántas filas coincidieron (0 = el pago no existe o está anulado).
+    async update(id, { anio, mes, monto }) {
+        const [result] = await pool.query(
+            'UPDATE pagos SET anio = ?, mes = ?, monto = ? WHERE id = ? AND estado = 0',
+            [anio, mes, monto, id]
+        );
+        return result.affectedRows;
     },
 
     // Eliminación lógica: NO borra la fila, solo marca estado = 1
